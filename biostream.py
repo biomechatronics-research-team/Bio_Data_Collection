@@ -115,3 +115,23 @@ class BioStream:
             y1 = latest_data[1]
             y3 = self.sensor_data[data_index + 1][1]
             return ((x2 - x1) * (y3 - y1))/ (x3 - x1) + y1
+
+    #TODO -> Pass filename string 
+    def write_to_csv(self, data_to_write):
+        csv_file = open(self.filename, 'w', newline='')
+        header = ['timestamp', 'sensor1', 'sensor2', 'sensor3', 'sensor4', 'sensor5', 'sensor6', 'sensor7', 'sensor8', 'knee_angle']
+        writer = csv.DictWriter(csv_file, fieldnames=header)
+        writer.writeheader()
+        for i in range(0, len(data_to_write)):
+            writer.writerow({'timestamp': data_to_write[i][0],
+            'sensor1': data_to_write[i][1][0],
+            'sensor2':data_to_write[i][1][2],
+            'sensor3':data_to_write[i][1][3],
+            'sensor4':data_to_write[i][1][4],
+            'sensor5':data_to_write[i][1][5],
+            'sensor6':data_to_write[i][1][6],
+            'sensor7':data_to_write[i][1][7],
+            'sensor8':data_to_write[i][1][8],
+            'knee_angle': data_to_write[i][2]})
+    
+       
