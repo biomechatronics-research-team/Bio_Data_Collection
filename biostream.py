@@ -63,11 +63,8 @@ class BioStream:
 
 
     def get_sensor_samples(self):
-        while True:
-            # If all the samples have been retrieved.
-            if self.has_finished:
-                return
-            
+        # Loop until the get_openbci_samples process finishes.
+        while not self.has_finished:            
             # Get the latest sensor data.
             sensor_value = self.serial_device.readline().decode('ascii')
             sensor_timestamp = time()

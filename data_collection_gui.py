@@ -5,7 +5,7 @@ from past.builtins import apply
 # Defining Attributes:
 title = "Biomechatronics Data Collection"
 dimensions = "800x650"
-style = "clam"
+style_txt = "clam"
 header_title = "Biomechatronics Research Group"
 main_font = "Helvetica"
 
@@ -15,7 +15,7 @@ def init_window():
     window.title(title)
     window.geometry(dimensions)
     style = ttk.Style()
-    style.theme_use(style)
+    style.theme_use(style_txt)
 
 # Header Section
     header = Frame(window)
@@ -186,8 +186,6 @@ def init_window():
     Lb2.pack(side = "left")
     scrollbar.config(command=Lb2.yview)
     scrollbar.pack(side="left", fill="y")
-
-
 
 #Start Button
     myButton = Button(listBoxSide2, text="Start", font=(main_font, 20, "bold") , bg="green",
