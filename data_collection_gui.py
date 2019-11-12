@@ -1,48 +1,76 @@
-from tkinter import ttk, filedialog, Frame, Label, Entry, Button, Radiobutton, Scrollbar, Listbox, VERTICAL, filedialog, Tk, IntVar
-from tkinter.filedialog import asksaveasfile
+from tkinter import ttk, Frame, Label, Entry, Button, Radiobutton, Scrollbar, Listbox, VERTICAL, filedialog, Tk, IntVar, StringVar
+from tkinter.filedialog import asksaveasfile, askdirectory
 from past.builtins import apply
 
-# Defining Attributes:
+# *** Defining Attributes ***
+# Strings
 title = "Biomechatronics Data Collection"
-dimensions = "800x650"
-style_txt = "clam"
 header_title = "Biomechatronics Research Group"
+style_txt = "clam"
+test_id_txt = "Test ID:"
+test_format_txt = "Format: Initials_#Test# > Format Example: PRG_#1"
+directory_txt = "Click and Select the Root Directory for this test:"
+select_dir_txt = "Select Root Directory"
+
+# Dimensions
+dimensions = "800x650"
+left_padding = 25
+
+# Fonts
 main_font = "Helvetica"
+title_font_size = 30
+genereal_font_size = 12
+
+# Colors
+highlight_bg_color = "gray"
+label_bg_color = "lightgreen"
+selected_item_color = "green"
+# *** End of Attributes Definition ***
+
+# Global Variables
+
+# TODO -> Add functionality of start button...
+def start_button():
+    print("START WAS PRESSED!")
 
 def init_window():
-# Init program window...
+    # Init program window...
     window = Tk()
     window.title(title)
     window.geometry(dimensions)
     style = ttk.Style()
     style.theme_use(style_txt)
 
-# Header Section
+    # Header Section
     header = Frame(window)
-    header.pack(side="top", fill="x")
-    Label(header,  text= header_title, font=(main_font, 30, "bold")).pack()
+    header.pack(side = "top", fill = "x")
+    Label(header,  text= header_title, font=(main_font, title_font_size, "bold")).pack()
 
- #Test ID
+    # Test ID
     testID = Frame(window)
-    testID.pack(side="top", fill="x")
-    Label(testID, text="     Test ID: ").pack(side="left")
-    Entry(testID, highlightbackground="gray", bg = "lightgreen").pack(side="left")
-    Label(testID, text= '\n' + "     Format: Initials_#Test# > Format Example: PRG_#1"+'\n').pack(side="left")
+    testID.pack(side = "top", fill = "x")
+    Label(testID, text = test_id_txt, font = (main_font, genereal_font_size, "bold"), 
+          padx = left_padding).pack(side = "left")
+    Entry(testID, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+    Label(testID, text = test_format_txt, padx = left_padding).pack(side = "left")
 
-# Directory Section
+    # Directory Section
     directory = Frame(window)
-    directory.pack(side="top", fill="x")
-    Label(directory, text="     Enter the Save Directory for the desired test: " + '\n').pack(side="left")
+    directory.pack(side = "top", fill = "x")
+    Label(directory, text = directory_txt, padx = left_padding).pack(side = "left")
+    current_dir = StringVar()
+    current_dir_label = Label(directory, textvariable = current_dir)
 
     # Save Directory Button will Select folder and Get Folder's Path
     def mfileopen():
-        file1 = filedialog.askdirectory()
-        label1 = Label(directory, text = file1).pack(side = "left")
-    button2 = Button(directory,text = "Save Directory", bg="green", fg = "white", command = mfileopen).pack(side = "left")
+        current_dir.set(askdirectory())
+        
+    Button(directory, text = select_dir_txt, command = mfileopen).pack(side = "left")
+    current_dir_label.pack(side = "left")
 
 #Basic Information
     profile = Frame(window)
-    Label(profile, text= "     Basic Information:" , font=(main_font, 12, "bold")).pack(side = "left")
+    Label(profile, text= "     Basic Information:" , font=(main_font, genereal_font_size, "bold")).pack(side = "left")
     profile.pack(side="top", fill="x")
     profile3 = Frame(window)
     profile3.pack(side="top", fill="x")
@@ -56,26 +84,26 @@ def init_window():
     profile2 = Frame(window)
     profile2.pack(side="top", fill="x")
     Label(profile2, text="     Age:       ").pack(side="left")
-    Entry(profile2, highlightbackground="gray", bg = "lightgreen").pack(side="left")
+    Entry(profile2, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side="left")
 
 
 #Height
     profile2 = Frame(window)
     profile2.pack(side="top", fill="x")
     Label(profile2, text="     Height:  ").pack(side="left")
-    Entry(profile2, highlightbackground="gray", bg = "lightgreen").pack(side="left")
+    Entry(profile2, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side="left")
 
 
 #Weight
     profile2 = Frame(window)
     profile2.pack(side="top", fill="x")
     Label(profile2, text="     Weight: ").pack(side="left")
-    Entry(profile2, highlightbackground="gray", bg = "lightgreen").pack(side="left")
+    Entry(profile2, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side="left")
 
 #Test Settings
     settings = Frame(window)
     settings.pack(side="top", fill="x")
-    Label(settings, text="    Test Settings: " , font=(main_font, 12, "bold")).pack(side="left")
+    Label(settings, text="    Test Settings: " , font=(main_font, genereal_font_size, "bold")).pack(side="left")
 
 
 #Left or Right Leg
@@ -118,12 +146,12 @@ def init_window():
     def ShowChoice(text, v):
         print(text, v.get())
 
-    varsex = IntVar()
-    varsex.set(legSelection[0][1])
+    gender = IntVar()
+    gender.set(legSelection[0][1])
 
     for txt, val in legSelection:
-        Radiobutton(legs, text=txt, variable=varsex, value=val,
-                       command=lambda t=txt, v=varsex: ShowChoice(t, v)).pack(side="left")
+        Radiobutton(legs, text=txt, variable=gender, value=val,
+                       command=lambda t=txt, v=gender: ShowChoice(t, v)).pack(side="left")
 
     vartest = IntVar()
     vartest.set(movementSelection[0][1])
@@ -149,8 +177,8 @@ def init_window():
     Label(listBoxSide2, text= "     " ).pack(side="left")
     Label(listBoxSide2, text="                            ").pack(side="right")
     scrollbar = Scrollbar(listBoxSide2, orient=VERTICAL)
-    Lb1 = Listbox(listBoxSide2, bg = "lightgreen", height = 5, highlightcolor = "green",
-                  selectbackground = "green", selectmode = "SINGLE", yscrollcommand = 1)
+    Lb1 = Listbox(listBoxSide2, bg = label_bg_color, height = 5, highlightcolor = selected_item_color,
+                  selectbackground = selected_item_color, selectmode = "SINGLE", yscrollcommand = 1)
     Lb1.insert(1, "PORT1")
     Lb1.insert(2, "PORT2")
     Lb1.insert(3, "PORT3")
@@ -165,7 +193,7 @@ def init_window():
 
 
 
-#List of LSL Stream Names???
+    # List of LSL Stream Names???
     listBoxSide3 = Frame(window)
     listBoxSide3.pack(side="top", fill="x")
     listBoxSide4 = Frame(window)
@@ -173,8 +201,8 @@ def init_window():
     Label(listBoxSide3, text= '\n' + "     LSL Stream Name From: ").pack(side="left")
     Label(listBoxSide4, text= "     " ).pack(side="left")
     scrollbar = Scrollbar(listBoxSide4, orient=VERTICAL)
-    Lb2 = Listbox(listBoxSide4, bg = "lightgreen", height = 5, highlightcolor = "green",
-                  selectbackground = "green", selectmode = "SINGLE", yscrollcommand = 1)
+    Lb2 = Listbox(listBoxSide4, bg = label_bg_color, height = 5, highlightcolor = selected_item_color,
+                  selectbackground = selected_item_color, selectmode = "SINGLE", yscrollcommand = 1)
     Lb2.insert(1, "STREAM_NAME_1")
     Lb2.insert(2, "STREAM_NAME_2")
     Lb2.insert(3, "STREAM_NAME_3")
@@ -187,12 +215,11 @@ def init_window():
     scrollbar.config(command=Lb2.yview)
     scrollbar.pack(side="left", fill="y")
 
-#Start Button
-    myButton = Button(listBoxSide2, text="Start", font=(main_font, 20, "bold") , bg="green",
-                      fg="white", padx = 20, pady = 20).pack()
+    # Start Button
+    Button(listBoxSide2, text="Start", font=(main_font, 20, "bold") , bg=label_bg_color,fg="white", 
+        padx = 20, pady = 20, command = start_button).pack()
 
-
-# Start GUI loop...
+    # Start GUI loop...
     window.mainloop()
 
 init_window()
