@@ -13,8 +13,6 @@ directory_txt = "Click and Select the Root Directory for this test:"
 select_dir_txt = "Select Root Directory"
 test_info_txt = "Basic Information:"
 gender_txt = "Gender:"
-gender_1 = "Male"
-gender_2 = "Female"
 age_txt = "Age:"
 height_txt = "Height:"
 weight_txt = "Weight:"
@@ -49,10 +47,36 @@ height = -1
 weight = -1
 leg = -1
 motion_type = -1
-sensor_connected = -1
+sensor_connected = 2
 port_name = ""
 lsl_stream_name = ""
 # *** End of Global Variables ***
+
+# *** Global Mapping (str, int)
+# Choose Gender (Male, Female)
+gender_selection = [
+    ("Male", 1),
+    ("Female", 2),
+]
+
+# Choose Right or Left
+leg_selection = [
+    ("Left Leg", 3),
+    ("Right Leg", 4),
+]
+
+# Choose Type of Movement, Imagery or Actual Movement
+movement_selection = [
+    ("Imagery", 5),
+    ("Intent", 6),
+]
+
+# Will the person use a Sensor, yes or no
+sensor_selection = [
+    ("Yes", 7),
+    ("No", 8),
+]
+# *** End of Global Mapping ***
 
 # TODO -> Add functionality of start button...
 def start_button():
@@ -101,9 +125,11 @@ def init_window():
     gender_bar = Frame(window)
     gender_bar.pack(side = "top", fill = "x")
     Label(gender_bar, text = gender_txt, padx = left_padding).pack(side = "left")
-    global gender
-    Radiobutton(gender_bar, text = gender_1, variable = gender, value = 1).pack(side = "left")
-    Radiobutton(gender_bar, text = gender_2, variable = gender, value = 2).pack(side = "left")
+    var_gender = StringVar()
+    var_gender.set(gender_selection[0][1])
+    for txt, val in gender_selection:
+        Radiobutton(gender_bar, text = txt, variable = var_gender, value = val,
+                    command = lambda t = txt, v = var_gender : modify_selection(t, v)).pack(side = "left")
 
     # Age
     age_bar = Frame(window)
@@ -146,48 +172,60 @@ def init_window():
     sensor.pack(side = "top", fill = "x")
     Label(sensor, text = has_sensor_txt, padx = left_padding).pack(side = "left")
 
-    # Choose Right or Left
-    legSelection = [
-        ("Right Leg   ", 1),
-        ("Left Leg   ", 2),
-    ]
 
-    # Choose Type of Movement, Imagery or Actual Movement
-    movementSelection = [
-        ("Movement", 3),
-        ("Intent   ", 4),
-    ]
+    # Function to modify the corresponding global variable whenever a user changes a radio button.
+    def modify_selection(text, v):
+        value = int(v.get())
+        # Note -> This presumes each option will remain binary. In case that changes, this must be updated.
+        index = (value - 1) % 2
+        
+        # Calculate the total number of options.
+        max_size = len(gender_selection) + len(leg_selection) + len(movement_selection) + len(sensor_selection)
+        
+        # Since "sensor" is the last option, value is > than total - len(sensor_selection).
+        if value > max_size - len(sensor_selection):
+            global sensor_connected
+            sensor_connected = sensor_selection[index]
+            return
 
-    # Will the person use a Sensor, yes or no
-    sensorSelection = [
-        ("Yes", 5),
-        ("No", 6),
-    ]
+        # Subtract the length of sensor_selection and the remaining is a subproblem 
+        # (similar to the original problem, but smaller in size).
+        max_size -= len(sensor_selection)
+        if value > max_size - len(movement_selection):
+            global motion_type
+            motion_type = movement_selection[index]
+            return
+        
+        max_size -= len(movement_selection)
+        if value > max_size - len(leg_selection):
+            global leg
+            leg = leg_selection[index]
+            return
+
+        max_size -= len(leg_selection)
+        if value > max_size - len(gender_selection):
+            global gender
+            gender = gender_selection[index]
+            return
 
     # Creation of various radio buttons for the options above
-    def ShowChoice(text, v):
-        print(text, v.get())
-
     var_leg = IntVar()
-    var_leg.set(legSelection[0][1])
-
-    for txt, val in legSelection:
+    var_leg.set(leg_selection[0][1])
+    for txt, val in leg_selection:
         Radiobutton(legs, text = txt, variable = var_leg, value = val,
-                       command = lambda t = txt, v = var_leg : ShowChoice(t, v)).pack(side = "left")
+                    command = lambda t = txt, v = var_leg : modify_selection(t, v)).pack(side = "left")
 
     var_test = IntVar()
-    var_test.set(movementSelection[0][1])
-
-    for txt, val in movementSelection:
+    var_test.set(movement_selection[0][1])
+    for txt, val in movement_selection:
         Radiobutton(mov, text = txt, variable = var_test, value = val,
-                       command = lambda t = txt, v=var_test : ShowChoice(t, v)).pack(side = "left")
+                    command = lambda t = txt, v=var_test : modify_selection(t, v)).pack(side = "left")
 
     var_sensor = IntVar()
-    var_sensor.set(sensorSelection[0][1])
-
-    for txt, val in sensorSelection:
+    var_sensor.set(sensor_selection[0][1])
+    for txt, val in sensor_selection:
         Radiobutton(sensor, text = txt, variable = var_sensor, value = val,
-                       command = lambda t = txt, v = var_sensor : ShowChoice(t, v)).pack(side = "left")
+                    command = lambda t = txt, v = var_sensor : modify_selection(t, v)).pack(side = "left")
 
 
 #List of Possible Ports
