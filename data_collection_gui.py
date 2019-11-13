@@ -1,6 +1,8 @@
 from tkinter import ttk, Frame, Label, Entry, Button, Radiobutton, Scrollbar, Listbox, VERTICAL, filedialog, Tk, IntVar, StringVar
 from tkinter.filedialog import asksaveasfile, askdirectory
 from past.builtins import apply
+from serial.tools import list_ports
+from pylsl import resolve_stream
 
 # *** Defining Attributes ***
 # Strings
@@ -21,6 +23,8 @@ leg_txt = "Choose Leg:"
 leg_act_text = "Type of Motion:"
 has_sensor_txt = "Sensor connected:"
 start_btn_txt = "Start"
+sensor_port_txt = "Select port to Recieve Data From:"
+lsl_txt = "Select LSL Stream Name From:"
 
 # Dimensions
 dimensions = "800x650"
@@ -31,6 +35,7 @@ start_font_size = 20
 main_font = "Helvetica"
 title_font_size = 30
 genereal_font_size = 12
+scroll_item_height = 5
 
 # Colors
 highlight_bg_color = "gray"
@@ -228,55 +233,48 @@ def init_window():
                     command = lambda t = txt, v = var_sensor : modify_selection(t, v)).pack(side = "left")
 
 
-#List of Possible Ports
-    listBoxSide = Frame(window)
-    listBoxSide.pack(side="top", fill="x")
-    listBoxSide2 = Frame(window)
-    listBoxSide2.pack(side="top", fill="x")
-    Label(listBoxSide, text= '\n' + "     Select port to Recieve Data From: ").pack(side="left")
-    Label(listBoxSide2, text= "     " ).pack(side="left")
-    Label(listBoxSide2, text="                            ").pack(side="right")
-    scrollbar = Scrollbar(listBoxSide2, orient=VERTICAL)
-    Lb1 = Listbox(listBoxSide2, bg = label_bg_color, height = 5, highlightcolor = selected_item_color,
+    # List of Possible Ports
+    port_bar = Frame(window)
+    port_bar.pack(side = "top", fill = "x")
+    Label(port_bar, text = sensor_port_txt, padx = left_padding).pack(side = "left")
+    p_scroll_frame = Frame(window)
+    p_scroll_frame.pack(side = "top", fill = "x", padx = left_padding)
+    scrollbar = Scrollbar(p_scroll_frame, orient = VERTICAL)
+    ports_list = Listbox(p_scroll_frame, bg = label_bg_color, height = scroll_item_height, highlightcolor = selected_item_color,
                   selectbackground = selected_item_color, selectmode = "SINGLE", yscrollcommand = 1)
-    Lb1.insert(1, "PORT1")
-    Lb1.insert(2, "PORT2")
-    Lb1.insert(3, "PORT3")
-    Lb1.insert(4, "PORT4")
-    Lb1.insert(5, "PORT5")
-    Lb1.insert(6, "PORT6")
-    Lb1.insert(7, "PORT7")
-    Lb1.insert(8, "PORT8")
-    Lb1.pack(side = "left")
-    scrollbar.config(command = Lb1.yview)
+    
+    # TODO -> Add the refresh button and dynamically re-populate the ports_list.
+    ports = list(list_ports.comports())
+    for i in range(0, len(ports)):
+        ports_list.insert(i + 1, ports[i])
+
+    ports_list.pack(side = "left")
+    scrollbar.config(command = ports_list.yview)
     scrollbar.pack(side = "left", fill = "y")
 
+    # List of LSL Stream Names
+    lsl_bar = Frame(window)
+    lsl_bar.pack(side = "top", fill = "x")
+    lsl_scroll_frame = Frame(window)
+    lsl_scroll_frame.pack(side = "top", fill = "x", padx = left_padding)
+    Label(lsl_bar, text = lsl_txt, padx = left_padding).pack(side = "left")
+    scrollbar = Scrollbar(lsl_scroll_frame, orient = VERTICAL)
 
-
-    # List of LSL Stream Names???
-    listBoxSide3 = Frame(window)
-    listBoxSide3.pack(side = "top", fill = "x")
-    listBoxSide4 = Frame(window)
-    listBoxSide4.pack(side = "top", fill = "x")
-    Label(listBoxSide3, text = '\n' + "     LSL Stream Name From: ").pack(side = "left")
-    Label(listBoxSide4, text =  "     " ).pack(side="left")
-    scrollbar = Scrollbar(listBoxSide4, orient=VERTICAL)
-    Lb2 = Listbox(listBoxSide4, bg = label_bg_color, height = 5, highlightcolor = selected_item_color,
+    lsl_list = Listbox(lsl_scroll_frame, bg = label_bg_color, height = scroll_item_height, highlightcolor = selected_item_color,
                   selectbackground = selected_item_color, selectmode = "SINGLE", yscrollcommand = 1)
-    Lb2.insert(1, "STREAM_NAME_1")
-    Lb2.insert(2, "STREAM_NAME_2")
-    Lb2.insert(3, "STREAM_NAME_3")
-    Lb2.insert(4, "STREAM_NAME_4")
-    Lb2.insert(5, "STREAM_NAME_5")
-    Lb2.insert(6, "STREAM_NAME_6")
-    Lb2.insert(7, "STREAM_NAME_7")
-    Lb2.insert(8, "STREAM_NAME_8")
-    Lb2.pack(side = "left")
-    scrollbar.config(command = Lb2.yview)
+    
+    # TODO -> Add the refresh button and dynamically re-populate the ports_list.
+    # TODO -> Make sure the app launches even when there's no LSL stream running.
+    lsl_streams = resolve_stream('type', 'EEG')
+    for i in range(0, len(lsl_streams)):
+        lsl_list.insert(i + 1, lsl_streams[i].name())
+
+    lsl_list.pack(side = "left")
+    scrollbar.config(command = lsl_list.yview)
     scrollbar.pack(side = "left", fill = "y")
 
     # Start Button
-    Button(listBoxSide2, text = start_btn_txt, font = (main_font, start_font_size, "bold"), 
+    Button(p_scroll_frame, text = start_btn_txt, font = (main_font, start_font_size, "bold"), 
            bg = label_bg_color,fg = "white", padx = left_padding, pady = left_padding, 
            command = start_button).pack()
 
