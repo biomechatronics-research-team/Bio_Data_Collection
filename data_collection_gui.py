@@ -11,10 +11,23 @@ test_id_txt = "Test ID:"
 test_format_txt = "Format: Initials_#Test# > Format Example: PRG_#1"
 directory_txt = "Click and Select the Root Directory for this test:"
 select_dir_txt = "Select Root Directory"
+test_info_txt = "Basic Information:"
+gender_txt = "Gender:"
+gender_1 = "Male"
+gender_2 = "Female"
+age_txt = "Age:"
+height_txt = "Height:"
+weight_txt = "Weight:"
+settings_txt = "Test Settings:"
+leg_txt = "Choose Leg:"
+leg_act_text = "Type of Motion:"
+has_sensor_txt = "Sensor connected:"
+start_btn_txt = "Start"
 
 # Dimensions
 dimensions = "800x650"
 left_padding = 25
+start_font_size = 20
 
 # Fonts
 main_font = "Helvetica"
@@ -27,7 +40,19 @@ label_bg_color = "lightgreen"
 selected_item_color = "green"
 # *** End of Attributes Definition ***
 
-# Global Variables
+# *** Global Variables ***
+test_id = ""
+current_directory = ""
+gender = 2 # 1 -> Male, 2 -> Female.
+age = -1
+height = -1
+weight = -1
+leg = -1
+motion_type = -1
+sensor_connected = -1
+port_name = ""
+lsl_stream_name = ""
+# *** End of Global Variables ***
 
 # TODO -> Add functionality of start button...
 def start_button():
@@ -68,104 +93,101 @@ def init_window():
     Button(directory, text = select_dir_txt, command = mfileopen).pack(side = "left")
     current_dir_label.pack(side = "left")
 
-#Basic Information
-    profile = Frame(window)
-    Label(profile, text= "     Basic Information:" , font=(main_font, genereal_font_size, "bold")).pack(side = "left")
-    profile.pack(side="top", fill="x")
-    profile3 = Frame(window)
-    profile3.pack(side="top", fill="x")
-    Label(profile3, text="     Gender: ").pack(side="left")
-    gender = 0
-    Radiobutton(profile3, text="Male", variable=gender, value=1).pack(side="left")
-    Radiobutton(profile3, text="Female", variable=gender, value=2).pack(side="left")
+    # Basic Information
+    profile_bar = Frame(window)
+    Label(profile_bar, text = test_info_txt , font = (main_font, genereal_font_size, "bold"), 
+          padx = left_padding).pack(side = "left")
+    profile_bar.pack(side = "top", fill = "x")
+    gender_bar = Frame(window)
+    gender_bar.pack(side = "top", fill = "x")
+    Label(gender_bar, text = gender_txt, padx = left_padding).pack(side = "left")
+    global gender
+    Radiobutton(gender_bar, text = gender_1, variable = gender, value = 1).pack(side = "left")
+    Radiobutton(gender_bar, text = gender_2, variable = gender, value = 2).pack(side = "left")
 
+    # Age
+    age_bar = Frame(window)
+    age_bar.pack(side = "top", fill = "x")
+    Label(age_bar, text = age_txt, padx = left_padding).pack(side = "left")
+    Entry(age_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
 
-#Age
-    profile2 = Frame(window)
-    profile2.pack(side="top", fill="x")
-    Label(profile2, text="     Age:       ").pack(side="left")
-    Entry(profile2, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side="left")
+    # Height
+    height_bar = Frame(window)
+    height_bar.pack(side = "top", fill = "x")
+    Label(height_bar, text = height_txt, padx = left_padding).pack(side = "left")
+    Entry(height_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
 
+    # Weight
+    weight_bar = Frame(window)
+    weight_bar.pack(side = "top", fill = "x")
+    Label(weight_bar, text = weight_txt, padx = left_padding).pack(side = "left")
+    Entry(weight_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
 
-#Height
-    profile2 = Frame(window)
-    profile2.pack(side="top", fill="x")
-    Label(profile2, text="     Height:  ").pack(side="left")
-    Entry(profile2, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side="left")
-
-
-#Weight
-    profile2 = Frame(window)
-    profile2.pack(side="top", fill="x")
-    Label(profile2, text="     Weight: ").pack(side="left")
-    Entry(profile2, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side="left")
-
-#Test Settings
+    # Test Settings
     settings = Frame(window)
-    settings.pack(side="top", fill="x")
-    Label(settings, text="    Test Settings: " , font=(main_font, genereal_font_size, "bold")).pack(side="left")
+    settings.pack(side = "top", fill = "x")
+    Label(settings, text = settings_txt , font = (main_font, genereal_font_size, "bold"), 
+          padx = left_padding).pack(side = "left")
 
-
-#Left or Right Leg
+    # Left or Right Leg
     legs = Frame(window)
-    legs.pack(side="top", fill="x")
-    Label(legs, text="     Choose Leg:      ").pack(side="left")
+    legs.pack(side = "top", fill = "x")
+    Label(legs, text = leg_txt, padx = left_padding).pack(side = "left")
 
 
-#Intent of Movement
+    # Intent of Movement
     mov = Frame(window)
-    mov.pack(side="top", fill="x")
-    Label(mov, text="     Type of Action: ").pack(side="left")
+    mov.pack(side = "top", fill = "x")
+    Label(mov, text = leg_act_text, padx = left_padding).pack(side = "left")
 
 
-#Sensor
+    # Sensor
     sensor = Frame(window)
-    sensor.pack(side="top", fill="x")
-    Label(sensor, text="     Sensor or Not:   ").pack(side="left")
+    sensor.pack(side = "top", fill = "x")
+    Label(sensor, text = has_sensor_txt, padx = left_padding).pack(side = "left")
 
-    #Choose Right or Left
+    # Choose Right or Left
     legSelection = [
         ("Right Leg   ", 1),
         ("Left Leg   ", 2),
     ]
 
-    #Choose Type of Movement, Imagery or Actual Movement
+    # Choose Type of Movement, Imagery or Actual Movement
     movementSelection = [
         ("Movement", 3),
         ("Intent   ", 4),
     ]
 
-    #Will the person use a Sensor, yes or no
+    # Will the person use a Sensor, yes or no
     sensorSelection = [
-        ("WithSensor", 5),
-        ("WithoutSensor", 6),
+        ("Yes", 5),
+        ("No", 6),
     ]
 
-
-#Creation of various radio buttons for the options above
+    # Creation of various radio buttons for the options above
     def ShowChoice(text, v):
         print(text, v.get())
 
-    gender = IntVar()
-    gender.set(legSelection[0][1])
+    var_leg = IntVar()
+    var_leg.set(legSelection[0][1])
 
     for txt, val in legSelection:
-        Radiobutton(legs, text=txt, variable=gender, value=val,
-                       command=lambda t=txt, v=gender: ShowChoice(t, v)).pack(side="left")
+        Radiobutton(legs, text = txt, variable = var_leg, value = val,
+                       command = lambda t = txt, v = var_leg : ShowChoice(t, v)).pack(side = "left")
 
-    vartest = IntVar()
-    vartest.set(movementSelection[0][1])
+    var_test = IntVar()
+    var_test.set(movementSelection[0][1])
 
     for txt, val in movementSelection:
-        Radiobutton(mov, text=txt, variable=vartest, value=val,
-                       command=lambda t=txt, v=vartest: ShowChoice(t, v)).pack(side="left")
+        Radiobutton(mov, text = txt, variable = var_test, value = val,
+                       command = lambda t = txt, v=var_test : ShowChoice(t, v)).pack(side = "left")
 
-    varSensor = IntVar()
-    varSensor.set(sensorSelection[0][1])
+    var_sensor = IntVar()
+    var_sensor.set(sensorSelection[0][1])
 
     for txt, val in sensorSelection:
-        Radiobutton(sensor, text=txt, variable=varSensor, value=val,
-                       command=lambda t=txt, v=varSensor: ShowChoice(t, v)).pack(side="left")
+        Radiobutton(sensor, text = txt, variable = var_sensor, value = val,
+                       command = lambda t = txt, v = var_sensor : ShowChoice(t, v)).pack(side = "left")
 
 
 #List of Possible Ports
@@ -188,18 +210,18 @@ def init_window():
     Lb1.insert(7, "PORT7")
     Lb1.insert(8, "PORT8")
     Lb1.pack(side = "left")
-    scrollbar.config(command=Lb1.yview)
-    scrollbar.pack(side="left", fill="y")
+    scrollbar.config(command = Lb1.yview)
+    scrollbar.pack(side = "left", fill = "y")
 
 
 
     # List of LSL Stream Names???
     listBoxSide3 = Frame(window)
-    listBoxSide3.pack(side="top", fill="x")
+    listBoxSide3.pack(side = "top", fill = "x")
     listBoxSide4 = Frame(window)
-    listBoxSide4.pack(side="top", fill="x")
-    Label(listBoxSide3, text= '\n' + "     LSL Stream Name From: ").pack(side="left")
-    Label(listBoxSide4, text= "     " ).pack(side="left")
+    listBoxSide4.pack(side = "top", fill = "x")
+    Label(listBoxSide3, text = '\n' + "     LSL Stream Name From: ").pack(side = "left")
+    Label(listBoxSide4, text =  "     " ).pack(side="left")
     scrollbar = Scrollbar(listBoxSide4, orient=VERTICAL)
     Lb2 = Listbox(listBoxSide4, bg = label_bg_color, height = 5, highlightcolor = selected_item_color,
                   selectbackground = selected_item_color, selectmode = "SINGLE", yscrollcommand = 1)
@@ -212,12 +234,13 @@ def init_window():
     Lb2.insert(7, "STREAM_NAME_7")
     Lb2.insert(8, "STREAM_NAME_8")
     Lb2.pack(side = "left")
-    scrollbar.config(command=Lb2.yview)
-    scrollbar.pack(side="left", fill="y")
+    scrollbar.config(command = Lb2.yview)
+    scrollbar.pack(side = "left", fill = "y")
 
     # Start Button
-    Button(listBoxSide2, text="Start", font=(main_font, 20, "bold") , bg=label_bg_color,fg="white", 
-        padx = 20, pady = 20, command = start_button).pack()
+    Button(listBoxSide2, text = start_btn_txt, font = (main_font, start_font_size, "bold"), 
+           bg = label_bg_color,fg = "white", padx = left_padding, pady = left_padding, 
+           command = start_button).pack()
 
     # Start GUI loop...
     window.mainloop()

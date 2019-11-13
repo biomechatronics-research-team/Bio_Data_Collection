@@ -2,6 +2,7 @@ from pylsl import StreamInlet, resolve_stream
 from serial import Serial, tools
 from multiprocessing import Process
 from time import time
+from csv import DictWriter
 
 class BioStream:
     """
@@ -117,7 +118,7 @@ class BioStream:
     def write_to_csv(self, data_to_write):
         csv_file = open(self.filename, 'w', newline='')
         header = ['timestamp', 'sensor1', 'sensor2', 'sensor3', 'sensor4', 'sensor5', 'sensor6', 'sensor7', 'sensor8', 'knee_angle']
-        writer = csv.DictWriter(csv_file, fieldnames=header)
+        writer = DictWriter(csv_file, fieldnames=header)
         writer.writeheader()
         for i in range(0, len(data_to_write)):
             writer.writerow({'timestamp': data_to_write[i][0],
@@ -130,5 +131,3 @@ class BioStream:
             'sensor7':data_to_write[i][1][7],
             'sensor8':data_to_write[i][1][8],
             'knee_angle': data_to_write[i][2]})
-    
-       
