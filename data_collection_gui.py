@@ -3,6 +3,7 @@ from tkinter.filedialog import asksaveasfile, askdirectory
 from past.builtins import apply
 from serial.tools import list_ports
 from pylsl import resolve_stream
+from biostream import BioStream
 
 # *** Defining Attributes ***
 # Strings
@@ -30,12 +31,12 @@ lsl_txt = "Select LSL Stream Name From:"
 dimensions = "800x650"
 left_padding = 25
 start_font_size = 20
+scroll_item_height = 5
 
 # Fonts
 main_font = "Helvetica"
 title_font_size = 30
 genereal_font_size = 12
-scroll_item_height = 5
 
 # Colors
 highlight_bg_color = "gray"
@@ -43,18 +44,6 @@ label_bg_color = "lightgreen"
 selected_item_color = "green"
 # *** End of Attributes Definition ***
 
-# *** Global Variables ***
-test_id = ""
-current_directory = ""
-gender = 2 # 1 -> Male, 2 -> Female.
-age = -1
-height = -1
-weight = -1
-leg = -1
-motion_type = -1
-sensor_connected = 2
-port_name = ""
-lsl_stream_name = ""
 # *** End of Global Variables ***
 
 # *** Global Mapping (str, int)
@@ -83,9 +72,35 @@ sensor_selection = [
 ]
 # *** End of Global Mapping ***
 
+# *** Global Variables ***
+height = -1
+weight = -1
+leg = -1
+motion_type = -1
+sensor_connected = 2
+port_name = ""
+lsl_stream_name = ""
+test_id_entry = None
+age_entry = None
+var_gender = None
+gender = gender_selection[0]
+current_dir = None
+
+
 # TODO -> Add functionality of start button...
 def start_button():
     print("START WAS PRESSED!")
+    t_ID = test_id_entry.get()
+    c_dir = current_dir.get()
+    gend = gender[0]
+    age = age_entry.get()
+    print(t_ID)
+    print(c_dir)
+    print(gend)
+    print(age)
+    # test_params = validate_params()
+    # b_stream = BioStream(test_params)  # TODO -> PASS THE RIGHT ARGUMENTS...
+    # b_stream.run_data_collection()  # TODO -> PASS SAMPLES#
 
 def init_window():
     # Init program window...
@@ -105,13 +120,16 @@ def init_window():
     testID.pack(side = "top", fill = "x")
     Label(testID, text = test_id_txt, font = (main_font, genereal_font_size, "bold"), 
           padx = left_padding).pack(side = "left")
-    Entry(testID, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+    global test_id_entry
+    test_id_entry = Entry(testID, highlightbackground = highlight_bg_color, bg = label_bg_color)
+    test_id_entry.pack(side = "left")
     Label(testID, text = test_format_txt, padx = left_padding).pack(side = "left")
 
     # Directory Section
     directory = Frame(window)
     directory.pack(side = "top", fill = "x")
     Label(directory, text = directory_txt, padx = left_padding).pack(side = "left")
+    global current_dir
     current_dir = StringVar()
     current_dir_label = Label(directory, textvariable = current_dir)
 
@@ -130,6 +148,7 @@ def init_window():
     gender_bar = Frame(window)
     gender_bar.pack(side = "top", fill = "x")
     Label(gender_bar, text = gender_txt, padx = left_padding).pack(side = "left")
+    global var_gender
     var_gender = StringVar()
     var_gender.set(gender_selection[0][1])
     for txt, val in gender_selection:
@@ -140,7 +159,9 @@ def init_window():
     age_bar = Frame(window)
     age_bar.pack(side = "top", fill = "x")
     Label(age_bar, text = age_txt, padx = left_padding).pack(side = "left")
-    Entry(age_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+    global age_entry
+    age_entry = Entry(age_bar, highlightbackground = highlight_bg_color, bg = label_bg_color)
+    age_entry.pack(side = "left")
 
     # Height
     height_bar = Frame(window)
