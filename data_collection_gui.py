@@ -16,14 +16,15 @@ directory_txt = "Click and Select the Root Directory for this test:"
 select_dir_txt = "Select Root Directory"
 test_info_txt = "Basic Information:"
 gender_txt = "Gender:"
-age_txt = "Age:"
-height_txt = "Height:"
-weight_txt = "Weight:"
+age_txt = "Age: (years)"
+height_txt = "Height: (foot-inches)"
+weight_txt = "Weight: (poinds)"
 settings_txt = "Test Settings:"
 leg_txt = "Choose Leg:"
 leg_act_text = "Type of Motion:"
 has_sensor_txt = "Sensor connected:"
 start_btn_txt = "Start"
+stop_btn_txt = "Stop"  # TODO -> Verify if this will be implemented.
 sensor_port_txt = "Select port to Recieve Data From:"
 lsl_txt = "Select LSL Stream Name From:"
 
@@ -63,12 +64,13 @@ leg_selection = [
 movement_selection = [
     ("Imagery", 5),
     ("Intent", 6),
+    ("None", 8),
 ]
 
 # Will the person use a Sensor, yes or no
 sensor_selection = [
-    ("Yes", 7),
-    ("No", 8),
+    ("Yes", 9),
+    ("No", 10),
 ]
 # *** End of Global Mapping ***
 
