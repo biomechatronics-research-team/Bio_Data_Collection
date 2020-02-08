@@ -58,12 +58,13 @@ gender_selection = [
 leg_selection = [
     ("Left Leg", 3),
     ("Right Leg", 4),
+    ("None", 5)
 ]
 
 # Choose Type of Movement, Imagery or Actual Movement
 movement_selection = [
-    ("Imagery", 5),
-    ("Intent", 6),
+    ("Imagery", 6),
+    ("Intent", 7),
     ("None", 8),
 ]
 
