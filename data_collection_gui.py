@@ -17,7 +17,7 @@ select_dir_txt = "Select Root Directory"
 test_info_txt = "Basic Information:"
 gender_txt = "Gender:"
 age_txt = "Age: (years)"
-height_txt = "Height: (foot-inches)"
+height_txt = "Height: (feet'inches: 5'11 or 4'8)"
 weight_txt = "Weight: (poinds)"
 settings_txt = "Test Settings:"
 leg_txt = "Choose Leg:"
@@ -46,6 +46,10 @@ selected_item_color = "green"
 
 # Validation Constants
 MAX_AGE_LENGTH = 2
+MAX_HEIGHT_LENGTH = 4
+height_proto = "n'nn"
+NUMERIC = 'n'
+SLASH = '\''
 
 # *** End of Attributes Definition ***
 
@@ -80,7 +84,6 @@ sensor_selection = [
 # *** End of Global Mapping ***
 
 # *** Global Variables ***
-height = -1
 weight = -1
 leg = -1
 motion_type = -1
@@ -89,6 +92,7 @@ port_name = ""
 lsl_stream_name = ""
 test_id_entry = None
 age_entry = None
+height_entry = None
 var_gender = None
 gender = gender_selection[0]
 current_dir = None
@@ -100,10 +104,12 @@ def start_button():
     c_dir = current_dir.get()
     gend = gender[0]
     age = age_entry.get()
+    height = height_entry.get()
     print(t_ID)
     print(c_dir)
     print(gend)
     print(age)
+    print(height)
     # test_params = validate_params()
     # b_stream = BioStream(test_params)  # TODO -> PASS THE RIGHT ARGUMENTS...
     # b_stream.run_data_collection()  # TODO -> PASS SAMPLES#
@@ -168,7 +174,7 @@ def init_window():
     
     # Make sure the value of the age entry is a number less than 100.
     def validate_age_input(age_in):
-        return (age_in.isdigit() and len(age_in) <= MAX_AGE_LENGTH) or len(age_in) == 0
+        return len(age_in) == 0 or (age_in.isdigit() and len(age_in) <= MAX_AGE_LENGTH)
     
     validate_age = window.register(validate_age_input)
     global age_entry
@@ -179,7 +185,27 @@ def init_window():
     height_bar = Frame(window)
     height_bar.pack(side = "top", fill = "x")
     Label(height_bar, text = height_txt, padx = left_padding).pack(side = "left")
-    Entry(height_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+    
+    # Validate if given height input follows the pattern defined above (REFER TO CONSTANTS SECTION).
+    def validate_height_input(height_in):
+        
+        if len(height_in) > MAX_HEIGHT_LENGTH:
+            return False
+ 
+        for i in range(0, len(height_in)):
+            
+            if height_proto[i] == NUMERIC and not height_in[i].isnumeric():
+                return False
+            
+            if height_proto[i] == SLASH and not (height_in[i] == height_proto[i]):
+                return False
+        
+        return True
+
+    validate_height = window.register(validate_height_input)
+    global height_entry
+    height_entry = Entry(height_bar, validate="key", validatecommand=(validate_height, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
+    height_entry.pack(side = "left")
 
     # Weight
     weight_bar = Frame(window)
