@@ -47,6 +47,7 @@ selected_item_color = "green"
 # Validation Constants
 MAX_AGE_LENGTH = 2
 MAX_HEIGHT_LENGTH = 4
+MAX_WEIGHT_LENGTH = 3
 height_proto = "n'nn"
 NUMERIC = 'n'
 SLASH = '\''
@@ -84,7 +85,6 @@ sensor_selection = [
 # *** End of Global Mapping ***
 
 # *** Global Variables ***
-weight = -1
 leg = -1
 motion_type = -1
 sensor_connected = 2
@@ -93,6 +93,7 @@ lsl_stream_name = ""
 test_id_entry = None
 age_entry = None
 height_entry = None
+weight_entry = None
 var_gender = None
 gender = gender_selection[0]
 current_dir = None
@@ -105,11 +106,13 @@ def start_button():
     gend = gender[0]
     age = age_entry.get()
     height = height_entry.get()
+    weight = weight_entry.get()
     print(t_ID)
     print(c_dir)
     print(gend)
     print(age)
     print(height)
+    print(weight)
     # test_params = validate_params()
     # b_stream = BioStream(test_params)  # TODO -> PASS THE RIGHT ARGUMENTS...
     # b_stream.run_data_collection()  # TODO -> PASS SAMPLES#
@@ -178,7 +181,7 @@ def init_window():
     
     validate_age = window.register(validate_age_input)
     global age_entry
-    age_entry = Entry(age_bar, validate="key", validatecommand=(validate_age, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
+    age_entry = Entry(age_bar, validate = "key", validatecommand = (validate_age, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
     age_entry.pack(side = "left")
 
     # Height
@@ -204,14 +207,21 @@ def init_window():
 
     validate_height = window.register(validate_height_input)
     global height_entry
-    height_entry = Entry(height_bar, validate="key", validatecommand=(validate_height, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
+    height_entry = Entry(height_bar, validate = "key", validatecommand = (validate_height, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
     height_entry.pack(side = "left")
 
     # Weight
     weight_bar = Frame(window)
     weight_bar.pack(side = "top", fill = "x")
     Label(weight_bar, text = weight_txt, padx = left_padding).pack(side = "left")
-    Entry(weight_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+    
+    def validate_weight_input(weight_input):
+        return len(weight_input) == 0 or (weight_input.isdigit() and len(weight_input) <= MAX_WEIGHT_LENGTH)
+
+    validate_weight = window.register(validate_weight_input)
+    global weight_entry
+    weight_entry = Entry(weight_bar, validate = "key", validatecommand = (validate_weight, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
+    weight_entry.pack(side = "left")
 
     # Test Settings
     settings = Frame(window)
