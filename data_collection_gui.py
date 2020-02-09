@@ -43,6 +43,10 @@ genereal_font_size = 12
 highlight_bg_color = "gray"
 label_bg_color = "lightgreen"
 selected_item_color = "green"
+
+# Validation Constants
+MAX_AGE_LENGTH = 2
+
 # *** End of Attributes Definition ***
 
 # *** End of Global Variables ***
@@ -88,7 +92,6 @@ age_entry = None
 var_gender = None
 gender = gender_selection[0]
 current_dir = None
-
 
 # TODO -> Add functionality of start button...
 def start_button():
@@ -162,8 +165,14 @@ def init_window():
     age_bar = Frame(window)
     age_bar.pack(side = "top", fill = "x")
     Label(age_bar, text = age_txt, padx = left_padding).pack(side = "left")
+    
+    # Make sure the value of the age entry is a number less than 100.
+    def validate_age_input(age_in):
+        return (age_in.isdigit() and len(age_in) <= MAX_AGE_LENGTH) or len(age_in) == 0
+    
+    validate_age = window.register(validate_age_input)
     global age_entry
-    age_entry = Entry(age_bar, highlightbackground = highlight_bg_color, bg = label_bg_color)
+    age_entry = Entry(age_bar, validate="key", validatecommand=(validate_age, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
     age_entry.pack(side = "left")
 
     # Height
