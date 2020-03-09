@@ -18,7 +18,7 @@ test_info_txt = "Basic Information:"
 gender_txt = "Gender:"
 age_txt = "Age: (years)"
 height_txt = "Height: (foot-inches)"
-weight_txt = "Weight: (poinds)"
+weight_txt = "Weight: (pounds)"
 settings_txt = "Test Settings:"
 leg_txt = "Choose Leg:"
 leg_act_text = "Type of Motion:"
@@ -27,6 +27,12 @@ start_btn_txt = "Start"
 stop_btn_txt = "Stop"  # TODO -> Verify if this will be implemented.
 sensor_port_txt = "Select port to Recieve Data From:"
 lsl_txt = "Select LSL Stream Name From:"
+direction_txt = "Direction of Movement:"
+hairlength_txt = "Hair Length:"
+environment_txt = "Type of Environment:"
+circumference_txt = "Head Circumference: (foot-inches)"
+density_txt = "Hair Density:"
+position_txt = "Measurement Position:"
 
 # Dimensions
 dimensions = "800x650"
@@ -72,6 +78,53 @@ sensor_selection = [
     ("Yes", 9),
     ("No", 10),
 ]
+
+# Choose Direction of Movement, Up, Down, Standing...
+direction_selection = [
+    ("Up", 11),
+    ("Down", 12),
+    ("Standing", 13),
+]
+# Choose Hair Length, bald, short,medium, long
+hairlength_selection = [
+    ("Bald", 14),
+    ("Short", 15),
+    ("Medium", 16),
+    ("Long",17),
+]
+# Choose Environment, quiet, moderately loud, loud 
+environment_selection = [
+    ("Quiet", 18),
+    ("Moderately Loud", 19),
+    ("Loud", 20),
+]
+# Choose Hair Density, [...expand...]
+density_selection = [
+    ("--", 21),
+    ("---", 22),
+    ("----", 23),
+]
+# Choose Measurement Position
+position_selection = [
+    ("Standing", 24),
+    ("Sitting", 25),
+]
+#
+
+# 
+
+#
+# Gonna add: type of mov (is this different from the one we have?), head circ., hair length, hair density, environment -H[del coemment]
+# [add here...]
+#
+# type of mov (up/down/standing, etc...)-select (not the same)
+#head circumference (entry)
+#Hair Length Select
+#Hair Densiry standby
+#Environment - select, loud or whatever. quiet. 
+
+
+
 # *** End of Global Mapping ***
 
 # *** Global Variables ***
@@ -87,6 +140,9 @@ age_entry = None
 var_gender = None
 gender = gender_selection[0]
 current_dir = None
+#add by H
+circumference = -1
+density = -1
 
 
 # TODO -> Add functionality of start button...
@@ -199,6 +255,39 @@ def init_window():
     sensor = Frame(window)
     sensor.pack(side = "top", fill = "x")
     Label(sensor, text = has_sensor_txt, padx = left_padding).pack(side = "left")
+
+    #added by H
+     # Direction of Movement
+    legs = Frame(window)
+    legs.pack(side = "top", fill = "x")
+    Label(legs, text = direction_txt, padx = left_padding).pack(side = "left")
+
+     # Length of Hair
+    legs = Frame(window)
+    legs.pack(side = "top", fill = "x")
+    Label(legs, text = hairlength_txt, padx = left_padding).pack(side = "left")
+
+     # Type of Environment
+    legs = Frame(window)
+    legs.pack(side = "top", fill = "x")
+    Label(legs, text = environment_txt, padx = left_padding).pack(side = "left")
+
+    # Density of Hair
+    legs = Frame(window)
+    legs.pack(side = "top", fill = "x")
+    Label(legs, text = density_txt, padx = left_padding).pack(side = "left")
+
+
+    # Head Circumference
+    circumference_bar = Frame(window)
+    circumference_bar.pack(side = "top", fill = "x")
+    Label(circumference_bar, text = circumference_txt, padx = left_padding).pack(side = "left")
+    Entry(circumference_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+
+    # Measurement Position
+    legs = Frame(window)
+    legs.pack(side = "top", fill = "x")
+    Label(legs, text = position_txt, padx = left_padding).pack(side = "left")
 
 
     # Function to modify the corresponding global variable whenever a user changes a radio button.
