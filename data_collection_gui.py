@@ -100,9 +100,9 @@ environment_selection = [
 ]
 # Choose Hair Density, [...expand...]
 density_selection = [
-    ("--", 21),
-    ("---", 22),
-    ("----", 23),
+    ("Light", 21),
+    ("Medium", 22),
+    ("Heavy", 23),
 ]
 # Choose Measurement Position
 position_selection = [
@@ -142,7 +142,12 @@ gender = gender_selection[0]
 current_dir = None
 #add by H
 circumference = -1
-density = -1
+var_density = -1
+direction_sel = -1
+environment_sel = -1
+hairlength_sel = -1
+density_sel = -1
+position_sel = -1
 
 
 # TODO -> Add functionality of start button...
@@ -159,6 +164,8 @@ def start_button():
     # test_params = validate_params()
     # b_stream = BioStream(test_params)  # TODO -> PASS THE RIGHT ARGUMENTS...
     # b_stream.run_data_collection()  # TODO -> PASS SAMPLES#
+    #HERBERT ADD HERE: test the inputs by adding as above
+    
 
 def init_window():
     # Init program window...
@@ -257,25 +264,25 @@ def init_window():
     Label(sensor, text = has_sensor_txt, padx = left_padding).pack(side = "left")
 
     #added by H
-     # Direction of Movement
-    legs = Frame(window)
-    legs.pack(side = "top", fill = "x")
-    Label(legs, text = direction_txt, padx = left_padding).pack(side = "left")
+    # Direction of Movement
+    direction = Frame(window)
+    direction.pack(side = "top", fill = "x")
+    Label(direction, text = direction_txt, padx = left_padding).pack(side = "left")
 
      # Length of Hair
-    legs = Frame(window)
-    legs.pack(side = "top", fill = "x")
-    Label(legs, text = hairlength_txt, padx = left_padding).pack(side = "left")
+    hairlength = Frame(window)
+    hairlength.pack(side = "top", fill = "x")
+    Label(hairlength, text = hairlength_txt, padx = left_padding).pack(side = "left")
 
      # Type of Environment
-    legs = Frame(window)
-    legs.pack(side = "top", fill = "x")
-    Label(legs, text = environment_txt, padx = left_padding).pack(side = "left")
+    environment = Frame(window)
+    environment.pack(side = "top", fill = "x")
+    Label(environment, text = environment_txt, padx = left_padding).pack(side = "left")
 
     # Density of Hair
-    legs = Frame(window)
-    legs.pack(side = "top", fill = "x")
-    Label(legs, text = density_txt, padx = left_padding).pack(side = "left")
+    density = Frame(window)
+    density.pack(side = "top", fill = "x")
+    Label( density, text = density_txt, padx = left_padding).pack(side = "left")
 
 
     # Head Circumference
@@ -285,9 +292,9 @@ def init_window():
     Entry(circumference_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
 
     # Measurement Position
-    legs = Frame(window)
-    legs.pack(side = "top", fill = "x")
-    Label(legs, text = position_txt, padx = left_padding).pack(side = "left")
+    position = Frame(window)
+    position.pack(side = "top", fill = "x")
+    Label(position, text = position_txt, padx = left_padding).pack(side = "left")
 
 
     # Function to modify the corresponding global variable whenever a user changes a radio button.
@@ -297,16 +304,46 @@ def init_window():
         index = (value - 1) % 2
         
         # Calculate the total number of options.
-        max_size = len(gender_selection) + len(leg_selection) + len(movement_selection) + len(sensor_selection)
+        max_size = len(gender_selection) + len(leg_selection) + len(movement_selection) + len(sensor_selection) + len(direction_selection) + len(hairlength_selection) + len(environment_selection) + len(density_selection) + len(position_selection)
         
         # Since "sensor" is the last option, value is > than total - len(sensor_selection).
+        if value > max_size - len(position_selection):
+            global position_sel
+            position_sel = position_selection[index]
+            return
+
+        # Subtract the length of sensor_selection and the remaining is a subproblem 
+        # (similar to the original problem, but smaller in size).
+        max_size -= len(position_selection)
+        if value > max_size - len(density_selection):
+            global density_sel
+            density_sel = density_selection[index]
+            return
+        
+        max_size -= len(density_selection)
+        if value > max_size - len(environment_selection):
+            global environment_sel
+            environment_sel = environment_selection[index]
+            return
+
+        max_size -= len(environment_selection)
+        if value > max_size - len(hairlength_selection):
+            global hairlength_sel
+            hairlength_sel = hairlength_selection[index]
+            return
+        
+        max_size -= len(hairlength_selection)
+        if value > max_size - len(direction_selection):
+            global direction_sel
+            direction_sel = direction_selection[index]
+            return
+
+        max_size -= len(direction_selection)
         if value > max_size - len(sensor_selection):
             global sensor_connected
             sensor_connected = sensor_selection[index]
             return
 
-        # Subtract the length of sensor_selection and the remaining is a subproblem 
-        # (similar to the original problem, but smaller in size).
         max_size -= len(sensor_selection)
         if value > max_size - len(movement_selection):
             global motion_type
@@ -324,6 +361,13 @@ def init_window():
             global gender
             gender = gender_selection[index]
             return
+#################################################################
+        
+       
+       
+        
+        
+
 
     # Creation of various radio buttons for the options above
     var_leg = IntVar()
@@ -344,6 +388,35 @@ def init_window():
         Radiobutton(sensor, text = txt, variable = var_sensor, value = val,
                     command = lambda t = txt, v = var_sensor : modify_selection(t, v)).pack(side = "left")
 
+    var_dir = IntVar()
+    var_dir.set(direction_selection[0][1])
+    for txt, val in direction_selection:
+        Radiobutton(direction, text = txt, variable = var_dir, value = val,
+                    command = lambda t = txt, v = var_dir : modify_selection(t, v)).pack(side = "left")
+
+    var_hairlength = IntVar()
+    var_hairlength.set(hairlength_selection[0][1])
+    for txt, val in hairlength_selection:
+        Radiobutton(hairlength, text = txt, variable = var_hairlength, value = val,
+                    command = lambda t = txt, v = var_hairlength : modify_selection(t, v)).pack(side = "left")
+
+    var_env = IntVar()
+    var_env.set(environment_selection[0][1])
+    for txt, val in environment_selection:
+        Radiobutton(environment, text = txt, variable = var_env, value = val,
+                    command = lambda t = txt, v = var_env : modify_selection(t, v)).pack(side = "left")     
+
+    var_density = IntVar()
+    var_density.set(density_selection[0][1])
+    for txt, val in density_selection:
+        Radiobutton(density, text = txt, variable = var_density, value = val,
+                    command = lambda t = txt, v = var_density : modify_selection(t, v)).pack(side = "left")
+
+    var_position = IntVar()
+    var_position.set(position_selection[0][1])
+    for txt, val in position_selection:
+        Radiobutton(position, text = txt, variable = var_position, value = val,
+                    command = lambda t = txt, v = var_position : modify_selection(t, v)).pack(side = "left")
 
     # List of Possible Ports
     port_bar = Frame(window)
