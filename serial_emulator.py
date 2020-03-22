@@ -1,7 +1,10 @@
 # This code was adapted from the following URL:
 #   https://stackoverflow.com/questions/2291772/virtual-serial-device-in-python
 
-import os, pty, serial, time
+import os
+import pty
+import serial
+import time
 
 master, slave = pty.openpty()
 s_name = os.ttyname(slave)

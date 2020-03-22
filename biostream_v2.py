@@ -1,4 +1,9 @@
 from pylsl import StreamInlet, resolve_stream
+from serial import Serial
+from serial.tools import list_ports
+from multiprocessing import Process, Queue
+from time import time
+
 
 class BioStream:
     '''
@@ -17,19 +22,25 @@ class BioStream:
             This class represents a 2-tuple for a sensor data entry.
             It stores the sensor value along with its corresponding timestamp.
         '''
+
         def __init__(self, value, timestamp):
             self.value = value
             self.timestamp = timestamp
-        
 
     class Mark4_Entry:
         '''
             This class represents a 2-tuple for an OpenBCI Mark IV headset entry.
             It stores the 8-channels values along with their corresponding timestamp.
         '''
+
         def __init__(self, channels, timestamp):
             self.channels = channels
             self.timestamp = timestamp
+
+    # Default Biostream constructor. Initialize variables for data synchronization.
+    def __init__(self):
+        self.mark4entries_queue = Queue()
+        self.kneeangle_queue = Queue()
 
     def find_lsl_index(self, stream_name):
         # Find EEG streams that are using the Lab Streaming Layer.
@@ -40,14 +51,14 @@ class BioStream:
         for i in range(0, len(self.streams)):
             if stream_name == self.streams[i].name():
                 stream_index = i
-        
+
         return stream_index
 
     # Defining data collection methods.
 
     # TODO -> Test this method...
     def collect_mark4lsl(self, num_samples, lsl_name):
-        
+
         stream_index = self.find_lsl_index(lsl_name)
         if stream_index < 0:
             raise ValueError("LSL device not connected:", lsl_name)
@@ -57,37 +68,97 @@ class BioStream:
         headset_entries = []
 
         while num_samples > 0:
-            bci_sample, timestamp = self.inlet.pull_sample()
-            headset_entries.append(self.Mark4_Entry(bci_sample, timestamp))
+            bci_sample = self.inlet.pull_sample()
+            headset_entries.append(self.Mark4_Entry(bci_sample, time()))
             num_samples -= 1
-        
+
         return headset_entries
+
+    # Stores LSL entries resulting from the 'collect_mark4lsl' method into a Queue instance.
+    def store_mark4lsl_entries(self, num_samples, lsl_name, queue):
+        queue.put(self.collect_mark4lsl(num_samples, lsl_name))
+
+    # TODO -> Implement & test this function.
+    def collect_sensor_data(self, serial_name, baud_rate, num_samples):
+
+        # TODO -> This part is not validating. Must fix this...
+        # Validate if serial_port is connected.
+        is_connected = False
+        for device in list_ports.comports():
+            print(device.usb_info)
+            if device.name == serial_name:
+                is_connected = True
+                break
+
+        if not is_connected:
+            raise ValueError("Serial Port not connected : %s" % serial_name)
+
+        # Establish serial communication.
+        self.serial_device = Serial(serial_name, baudrate=baud_rate)
+
+        # Initialize sensor entries list.
+        sensor_entries = []
+
+        while num_samples > 0:
+            # Get the latest sensor data.
+            sensor_value = self.serial_device.readline().decode('ascii')
+            sensor_timestamp = time()
+            sensor_entries.append(self.SensorData(
+                sensor_timestamp, sensor_value))
+
+        return sensor_entries
+
+    def store_sensor_entries(self, num_samples, serial_name, baud_rate, queue):
+        queue.put(self.collect_sensor_data(
+            serial_name, baud_rate, num_samples))
 
     # TODO -> Implement data collection method considering data from headset & knee angle.
     def collect_mark4lsl_kneeserial(self, num_samples, lsl_name, serial_name, baud_rate):
+
+        # Defining processes.
+        mark4lsl_process = Process(
+            target=self.store_mark4lsl_entries, args=(num_samples, lsl_name, self.mark4entries_queue))
+        kneeangle_process = Process(target=self.store_sensor_entries, args=(
+            2 * num_samples, serial_name, baud_rate, self.kneeangle_queue))
+
+        # Start and join both processes.
+        mark4lsl_process.start()
+        kneeangle_process.start()
+        mark4lsl_process.join()
+        kneeangle_process.join()
+
+        # TODO -> Synchronize data stored in these queues.
+        print(self.mark4entries_queue.get())
+        print(self.kneeangle_queue.get())
+
         return 0
 
-    
+
 # Make sure Serial & LSL mock streams are running before running this file.
 if __name__ == '__main__':
 
     # Prepairing Mock Test.
     num_samples = 20
     lsl_name = "BioSemi"
-    serial_name = "cool_serial"
+    serial_name = "/dev/ttys012"
     baud_rate = 9600
 
     # Initializing mock BioStream.
     mock = BioStream()
 
-    # Mock testing the data collection methods.
-    data_mark4 = mock.collect_mark4lsl(num_samples, lsl_name)
-    data_mark4_knee = mock.collect_mark4lsl_kneeserial(num_samples, lsl_name, serial_name, baud_rate)
+    # # Mock testing the data collection methods.
+    # data_mark4 = mock.collect_mark4lsl(num_samples, lsl_name)
+    # data_mark4_knee = mock.collect_mark4lsl_kneeserial(
+    #     num_samples, lsl_name, serial_name, baud_rate)
 
-    # Displaying Mark4 results.
-    print("Mark4:", data_mark4)
-    for val in data_mark4:
-        print(val.timestamp)
+    # # Displaying Mark4 results.
+    # print("Mark4:", data_mark4)
+    # for val in data_mark4:
+    #     print(val.channels)
 
-    # Displaying Mark4 + Knee Angle results.
-    print("Mark4 + Knee Angle:", data_mark4_knee)
+    # # Displaying Mark4 + Knee Angle results.
+    # print("Mark4 + Knee Angle:", data_mark4_knee)
+
+    data_mark5 = mock.collect_mark4lsl_kneeserial(
+        num_samples, lsl_name, serial_name, baud_rate)
+    # print(mock._tosync_mark4_entries)
