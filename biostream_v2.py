@@ -86,7 +86,7 @@ class BioStream:
         is_connected = False
         for device in list_ports.comports():
             print(device.usb_info)
-            if device.name == serial_name:
+            if device.device== serial_name:
                 is_connected = True
                 break
 
@@ -105,7 +105,7 @@ class BioStream:
             sensor_timestamp = time()
             sensor_entries.append(self.SensorData(
                 sensor_timestamp, sensor_value))
-
+            num_samples -= 1
         return sensor_entries
 
     def store_sensor_entries(self, num_samples, serial_name, baud_rate, queue):
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     # Prepairing Mock Test.
     num_samples = 20
     lsl_name = "BioSemi"
-    serial_name = "/dev/ttys012"
+    serial_name = "COM4"   #/dev/ttys012
     baud_rate = 9600
 
     # Initializing mock BioStream.
