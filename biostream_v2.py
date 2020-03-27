@@ -1,4 +1,4 @@
-from pylsl import StreamInlet, resolve_stream, resolve_byprop
+from pylsl import StreamInlet, resolve_byprop
 from serial import Serial
 from serial.tools import list_ports
 from multiprocessing import Process, Queue
