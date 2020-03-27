@@ -1,4 +1,4 @@
-from pylsl import StreamInlet, resolve_stream
+from pylsl import StreamInlet, resolve_stream, resolve_byprop
 from serial import Serial
 from serial.tools import list_ports
 from multiprocessing import Process, Queue
@@ -44,7 +44,7 @@ class BioStream:
 
     def find_lsl_index(self, stream_name):
         # Find EEG streams that are using the Lab Streaming Layer.
-        self.streams = resolve_stream('type', 'EEG')
+        self.streams = resolve_byprop('type', 'EEG', timeout = 0.5) 
 
         # Validate if stream_name is connected.
         stream_index = -1
@@ -61,7 +61,7 @@ class BioStream:
 
         stream_index = self.find_lsl_index(lsl_name)
         if stream_index < 0:
-            raise ValueError("LSL device not connected:", lsl_name)
+            exit(1)
 
         # Create a new inlet to read from the stream_name.
         self.inlet = StreamInlet(self.streams[stream_index])
@@ -91,7 +91,7 @@ class BioStream:
                 break
 
         if not is_connected:
-            raise ValueError("Serial Port not connected : %s" % serial_name)
+            exit(1) 
 
         # Establish serial communication.
         self.serial_device = Serial(serial_name, baudrate=baud_rate)
@@ -126,17 +126,17 @@ class BioStream:
         kneeangle_process.start()
         mark4lsl_process.join()
         kneeangle_process.join()
-
+        if mark4lsl_process.exitcode == 1:
+            raise ValueError("LSL device not connected:", lsl_name)
+        if kneeangle_process.exitcode == 1:
+            raise ValueError("Serial Port not connected:", serial_name)
         # TODO -> Synchronize data stored in these queues.
-        print(self.mark4entries_queue.get())
-        print(self.kneeangle_queue.get())
+        #print(self.mark4entries_queue.get())
+        #print(self.kneeangle_queue.get())
 
         return 0
 
-
-# Make sure Serial & LSL mock streams are running before running this file.
-if __name__ == '__main__':
-
+def main_test(): 
     # Prepairing Mock Test.
     num_samples = 20
     lsl_name = "BioSemi"
@@ -144,7 +144,10 @@ if __name__ == '__main__':
     baud_rate = 9600
 
     # Initializing mock BioStream.
-    mock = BioStream()
+    try:
+        mock = BioStream()
+    except ValueError as e:
+        raise e
 
     # # Mock testing the data collection methods.
     # data_mark4 = mock.collect_mark4lsl(num_samples, lsl_name)
@@ -162,3 +165,8 @@ if __name__ == '__main__':
     data_mark5 = mock.collect_mark4lsl_kneeserial(
         num_samples, lsl_name, serial_name, baud_rate)
     # print(mock._tosync_mark4_entries)
+    return 0
+
+# Make sure Serial & LSL mock streams are running before running this file.
+if __name__ == '__main__':
+    main_test()
