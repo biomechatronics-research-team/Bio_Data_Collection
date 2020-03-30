@@ -86,7 +86,7 @@ class BioStream:
         is_connected = False
         for device in list_ports.comports():
             print(device.usb_info)
-            if device.device== serial_name:
+            if device.device == serial_name:
                 is_connected = True
                 break
 
@@ -112,7 +112,28 @@ class BioStream:
         queue.put(self.collect_sensor_data(
             serial_name, baud_rate, num_samples))
 
-    # TODO -> Implement data collection method considering data from headset & knee angle.
+    # TODO -> Test this function and check if any other validation must be performed.
+    def sync_headset_knee_data(self, bci_samples, knee_samples):
+
+        if 2 * len(bci_samples) != len(knee_samples):
+            raise Exception("Samples cardinality does not match.")
+
+        sync_data = []
+
+        for i in range(0, len(bci_samples)):
+            # Get samples of interest.
+            bci_sample = bci_samples[i]
+            knee_sample_1 = knee_samples[2 * i]
+            knee_sampple_2 = knee_samples[2 * i + 1]
+            # Add the bci sample along with the average between both sensor values.
+            sync_data.append((bci_sample, self.SensorData(
+                timestamp=(knee_sample_1.timestamp+knee_sampple_2.timestamp)/2,
+                value=((knee_sample_1.value+knee_sampple_2.value)/2)
+            )))
+
+        return sync_data
+
+    # TODO -> Test this function and update design doc.
     def collect_mark4lsl_kneeserial(self, num_samples, lsl_name, serial_name, baud_rate):
 
         # Defining processes.
@@ -127,11 +148,10 @@ class BioStream:
         mark4lsl_process.join()
         kneeangle_process.join()
 
-        # TODO -> Synchronize data stored in these queues.
-        print(self.mark4entries_queue.get())
-        print(self.kneeangle_queue.get())
+        # print(self.mark4entries_queue.get())
+        # print(self.kneeangle_queue.get())
 
-        return 0
+        return self.sync_headset_knee_data(self.mark4entries_queue.get(), self.kneeangle_queue.get())
 
 
 # Make sure Serial & LSL mock streams are running before running this file.
@@ -140,7 +160,7 @@ if __name__ == '__main__':
     # Prepairing Mock Test.
     num_samples = 20
     lsl_name = "BioSemi"
-    serial_name = "COM4"   #/dev/ttys012
+    serial_name = "COM4"  # /dev/ttys012
     baud_rate = 9600
 
     # Initializing mock BioStream.
