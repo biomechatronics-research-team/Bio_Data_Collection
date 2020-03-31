@@ -1,4 +1,4 @@
-from pylsl import StreamInlet, resolve_byprop
+from pylsl import StreamInlet, resolve_byprop, LostError
 from serial import Serial
 from serial.tools import list_ports
 from multiprocessing import Process, Queue
@@ -64,11 +64,15 @@ class BioStream:
             exit(1)
 
         # Create a new inlet to read from the stream_name.
-        self.inlet = StreamInlet(self.streams[stream_index])
+        self.inlet = StreamInlet(self.streams[stream_index], recover= False)
         headset_entries = []
 
         while num_samples > 0:
-            bci_sample = self.inlet.pull_sample()
+            try:
+                bci_sample = self.inlet.pull_sample()
+            except LostError:
+                exit(3)
+            
             headset_entries.append(self.Mark4_Entry(bci_sample, time()))
             num_samples -= 1
 
@@ -91,7 +95,7 @@ class BioStream:
                 break
 
         if not is_connected:
-            exit(1) 
+            exit(2) 
 
         # Establish serial communication.
         self.serial_device = Serial(serial_name, baudrate=baud_rate)
@@ -147,10 +151,12 @@ class BioStream:
         kneeangle_process.start()
         mark4lsl_process.join()
         kneeangle_process.join()
-        if mark4lsl_process.exitcode == 1:
-            raise ValueError("LSL device not connected:", lsl_name)
-        if kneeangle_process.exitcode == 1:
-            raise ValueError("Serial Port not connected:", serial_name)
+        if mark4lsl_process.exitcode:
+            #raise ValueError("LSL device not connected:", lsl_name)
+            exit(mark4lsl_process.exitcode)
+        if kneeangle_process.exitcode:
+            #raise ValueError("Serial Port not connected:", serial_name)
+            exit(kneeangle_process.exitcode)
         # TODO -> Synchronize data stored in these queues.
         #print(self.mark4entries_queue.get())
         #print(self.kneeangle_queue.get())
@@ -165,10 +171,8 @@ def main_test():
     baud_rate = 9600
 
     # Initializing mock BioStream.
-    try:
-        mock = BioStream()
-    except ValueError as e:
-        raise e
+    mock = BioStream()
+
 
     # # Mock testing the data collection methods.
     # data_mark4 = mock.collect_mark4lsl(num_samples, lsl_name)
@@ -182,7 +186,6 @@ def main_test():
 
     # # Displaying Mark4 + Knee Angle results.
     # print("Mark4 + Knee Angle:", data_mark4_knee)
-
     data_mark5 = mock.collect_mark4lsl_kneeserial(
         num_samples, lsl_name, serial_name, baud_rate)
     # print(mock._tosync_mark4_entries)
