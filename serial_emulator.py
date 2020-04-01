@@ -6,20 +6,23 @@ import pty
 import serial
 import time
 
-master, slave = pty.openpty()
-s_name = os.ttyname(slave)
-ser = serial.Serial(s_name)
+def start_serial():
+    master, slave = pty.openpty()
+    s_name = os.ttyname(slave)
+    ser = serial.Serial(s_name)
+    while True:
 
-while True:
+        # Publish data into serial stream (SERVER).
+        ser.write(str.encode("90"))
 
-    # Publish data into serial stream (SERVER).
-    ser.write(str.encode("90"))
+        # Fetch data from serial stream (CLIENT).
+        data = os.read(master, 1000)
 
-    # Fetch data from serial stream (CLIENT).
-    data = os.read(master, 1000)
+        # Use data on client side.
+        print(data)
 
-    # Use data on client side.
-    print(data)
+        # Wait before publishing/consuming next data (T=2ms).
+        time.sleep(0.02)
 
-    # Wait before publishing/consuming next data (T=2ms).
-    time.sleep(0.02)
+if __name__ == '__main__':
+    start_serial()
