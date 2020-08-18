@@ -17,7 +17,7 @@ select_dir_txt = "Select Root Directory"
 test_info_txt = "Basic Information:"
 gender_txt = "Gender:"
 age_txt = "Age: (years)"
-height_txt = "Height: (feet'inches: 5'11 or 4'8)"
+height_txt = "Height: (foot-inches)"
 weight_txt = "Weight: (pounds)"
 settings_txt = "Test Settings:"
 leg_txt = "Choose Leg:"
@@ -27,6 +27,12 @@ start_btn_txt = "Start"
 stop_btn_txt = "Stop"  # TODO -> Verify if this will be implemented.
 sensor_port_txt = "Select port to Recieve Data From:"
 lsl_txt = "Select LSL Stream Name From:"
+direction_txt = "Direction of Movement:"
+hairlength_txt = "Hair Length:"
+environment_txt = "Type of Environment:"
+circumference_txt = "Head Circumference: (foot-inches)"
+density_txt = "Hair Density:"
+position_txt = "Measurement Position:"
 
 # Dimensions
 dimensions = "800x650"
@@ -43,15 +49,6 @@ genereal_font_size = 12
 highlight_bg_color = "gray"
 label_bg_color = "lightgreen"
 selected_item_color = "green"
-
-# Validation Constants
-MAX_AGE_LENGTH = 2
-MAX_HEIGHT_LENGTH = 4
-MAX_WEIGHT_LENGTH = 3
-height_proto = "n'nn"
-NUMERIC = 'n'
-SLASH = '\''
-
 # *** End of Attributes Definition ***
 
 # *** End of Global Variables ***
@@ -67,13 +64,12 @@ gender_selection = [
 leg_selection = [
     ("Left Leg", 3),
     ("Right Leg", 4),
-    ("None", 5)
 ]
 
 # Choose Type of Movement, Imagery or Actual Movement
 movement_selection = [
-    ("Imagery", 6),
-    ("Intent", 7),
+    ("Imagery", 5),
+    ("Intent", 6),
     ("None", 8),
 ]
 
@@ -82,9 +78,58 @@ sensor_selection = [
     ("Yes", 9),
     ("No", 10),
 ]
+
+# Choose Direction of Movement, Up, Down, Standing...
+direction_selection = [
+    ("Up", 11),
+    ("Down", 12),
+    ("Standing", 13),
+]
+# Choose Hair Length, bald, short,medium, long
+hairlength_selection = [
+    ("Bald", 14),
+    ("Short", 15),
+    ("Medium", 16),
+    ("Long",17),
+]
+# Choose Environment, quiet, moderately loud, loud 
+environment_selection = [
+    ("Quiet", 18),
+    ("Moderately Loud", 19),
+    ("Loud", 20),
+]
+# Choose Hair Density, [...expand...]
+density_selection = [
+    ("Light", 21),
+    ("Medium", 22),
+    ("Heavy", 23),
+]
+# Choose Measurement Position
+position_selection = [
+    ("Standing", 24),
+    ("Sitting", 25),
+]
+#
+
+# 
+
+#
+# Gonna add: type of mov (is this different from the one we have?), head circ., hair length, hair density, environment -H[del coemment]
+# [add here...]
+#
+# type of mov (up/down/standing, etc...)-select (not the same)
+#head circumference (entry)
+#Hair Length Select
+#Hair Densiry standby
+#Environment - select, loud or whatever. quiet. 
+
+
+
 # *** End of Global Mapping ***
 
 # *** Global Variables ***
+height = -1
+weight = -1
 leg = -1
 motion_type = -1
 sensor_connected = 2
@@ -92,11 +137,18 @@ port_name = ""
 lsl_stream_name = ""
 test_id_entry = None
 age_entry = None
-height_entry = None
-weight_entry = None
 var_gender = None
 gender = gender_selection[0]
 current_dir = None
+#add by H
+circumference = -1
+var_density = -1
+direction_sel = -1
+environment_sel = -1
+hairlength_sel = -1
+density_sel = -1
+position_sel = -1
+
 
 # TODO -> Add functionality of start button...
 def start_button():
@@ -105,17 +157,15 @@ def start_button():
     c_dir = current_dir.get()
     gend = gender[0]
     age = age_entry.get()
-    height = height_entry.get()
-    weight = weight_entry.get()
     print(t_ID)
     print(c_dir)
     print(gend)
     print(age)
-    print(height)
-    print(weight)
     # test_params = validate_params()
     # b_stream = BioStream(test_params)  # TODO -> PASS THE RIGHT ARGUMENTS...
     # b_stream.run_data_collection()  # TODO -> PASS SAMPLES#
+    #HERBERT ADD HERE: test the inputs by adding as above
+    
 
 def init_window():
     # Init program window...
@@ -174,54 +224,21 @@ def init_window():
     age_bar = Frame(window)
     age_bar.pack(side = "top", fill = "x")
     Label(age_bar, text = age_txt, padx = left_padding).pack(side = "left")
-    
-    # Make sure the value of the age entry is a number less than 100.
-    def validate_age_input(age_in):
-        return len(age_in) == 0 or (age_in.isdigit() and len(age_in) <= MAX_AGE_LENGTH)
-    
-    validate_age = window.register(validate_age_input)
     global age_entry
-    age_entry = Entry(age_bar, validate = "key", validatecommand = (validate_age, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
+    age_entry = Entry(age_bar, highlightbackground = highlight_bg_color, bg = label_bg_color)
     age_entry.pack(side = "left")
 
     # Height
     height_bar = Frame(window)
     height_bar.pack(side = "top", fill = "x")
     Label(height_bar, text = height_txt, padx = left_padding).pack(side = "left")
-    
-    # Validate if given height input follows the pattern defined above (REFER TO CONSTANTS SECTION).
-    def validate_height_input(height_in):
-        
-        if len(height_in) > MAX_HEIGHT_LENGTH:
-            return False
- 
-        for i in range(0, len(height_in)):
-            
-            if height_proto[i] == NUMERIC and not height_in[i].isnumeric():
-                return False
-            
-            if height_proto[i] == SLASH and not (height_in[i] == height_proto[i]):
-                return False
-        
-        return True
-
-    validate_height = window.register(validate_height_input)
-    global height_entry
-    height_entry = Entry(height_bar, validate = "key", validatecommand = (validate_height, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
-    height_entry.pack(side = "left")
+    Entry(height_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
 
     # Weight
     weight_bar = Frame(window)
     weight_bar.pack(side = "top", fill = "x")
     Label(weight_bar, text = weight_txt, padx = left_padding).pack(side = "left")
-    
-    def validate_weight_input(weight_input):
-        return len(weight_input) == 0 or (weight_input.isdigit() and len(weight_input) <= MAX_WEIGHT_LENGTH)
-
-    validate_weight = window.register(validate_weight_input)
-    global weight_entry
-    weight_entry = Entry(weight_bar, validate = "key", validatecommand = (validate_weight, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
-    weight_entry.pack(side = "left")
+    Entry(weight_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
 
     # Test Settings
     settings = Frame(window)
@@ -246,6 +263,39 @@ def init_window():
     sensor.pack(side = "top", fill = "x")
     Label(sensor, text = has_sensor_txt, padx = left_padding).pack(side = "left")
 
+    #added by H
+    # Direction of Movement
+    direction = Frame(window)
+    direction.pack(side = "top", fill = "x")
+    Label(direction, text = direction_txt, padx = left_padding).pack(side = "left")
+
+     # Length of Hair
+    hairlength = Frame(window)
+    hairlength.pack(side = "top", fill = "x")
+    Label(hairlength, text = hairlength_txt, padx = left_padding).pack(side = "left")
+
+     # Type of Environment
+    environment = Frame(window)
+    environment.pack(side = "top", fill = "x")
+    Label(environment, text = environment_txt, padx = left_padding).pack(side = "left")
+
+    # Density of Hair
+    density = Frame(window)
+    density.pack(side = "top", fill = "x")
+    Label( density, text = density_txt, padx = left_padding).pack(side = "left")
+
+
+    # Head Circumference
+    circumference_bar = Frame(window)
+    circumference_bar.pack(side = "top", fill = "x")
+    Label(circumference_bar, text = circumference_txt, padx = left_padding).pack(side = "left")
+    Entry(circumference_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+
+    # Measurement Position
+    position = Frame(window)
+    position.pack(side = "top", fill = "x")
+    Label(position, text = position_txt, padx = left_padding).pack(side = "left")
+
 
     # Function to modify the corresponding global variable whenever a user changes a radio button.
     def modify_selection(text, v):
@@ -254,16 +304,46 @@ def init_window():
         index = (value - 1) % 2
         
         # Calculate the total number of options.
-        max_size = len(gender_selection) + len(leg_selection) + len(movement_selection) + len(sensor_selection)
+        max_size = len(gender_selection) + len(leg_selection) + len(movement_selection) + len(sensor_selection) + len(direction_selection) + len(hairlength_selection) + len(environment_selection) + len(density_selection) + len(position_selection)
         
         # Since "sensor" is the last option, value is > than total - len(sensor_selection).
+        if value > max_size - len(position_selection):
+            global position_sel
+            position_sel = position_selection[index]
+            return
+
+        # Subtract the length of sensor_selection and the remaining is a subproblem 
+        # (similar to the original problem, but smaller in size).
+        max_size -= len(position_selection)
+        if value > max_size - len(density_selection):
+            global density_sel
+            density_sel = density_selection[index]
+            return
+        
+        max_size -= len(density_selection)
+        if value > max_size - len(environment_selection):
+            global environment_sel
+            environment_sel = environment_selection[index]
+            return
+
+        max_size -= len(environment_selection)
+        if value > max_size - len(hairlength_selection):
+            global hairlength_sel
+            hairlength_sel = hairlength_selection[index]
+            return
+        
+        max_size -= len(hairlength_selection)
+        if value > max_size - len(direction_selection):
+            global direction_sel
+            direction_sel = direction_selection[index]
+            return
+
+        max_size -= len(direction_selection)
         if value > max_size - len(sensor_selection):
             global sensor_connected
             sensor_connected = sensor_selection[index]
             return
 
-        # Subtract the length of sensor_selection and the remaining is a subproblem 
-        # (similar to the original problem, but smaller in size).
         max_size -= len(sensor_selection)
         if value > max_size - len(movement_selection):
             global motion_type
@@ -281,6 +361,13 @@ def init_window():
             global gender
             gender = gender_selection[index]
             return
+#################################################################
+        
+       
+       
+        
+        
+
 
     # Creation of various radio buttons for the options above
     var_leg = IntVar()
@@ -301,6 +388,35 @@ def init_window():
         Radiobutton(sensor, text = txt, variable = var_sensor, value = val,
                     command = lambda t = txt, v = var_sensor : modify_selection(t, v)).pack(side = "left")
 
+    var_dir = IntVar()
+    var_dir.set(direction_selection[0][1])
+    for txt, val in direction_selection:
+        Radiobutton(direction, text = txt, variable = var_dir, value = val,
+                    command = lambda t = txt, v = var_dir : modify_selection(t, v)).pack(side = "left")
+
+    var_hairlength = IntVar()
+    var_hairlength.set(hairlength_selection[0][1])
+    for txt, val in hairlength_selection:
+        Radiobutton(hairlength, text = txt, variable = var_hairlength, value = val,
+                    command = lambda t = txt, v = var_hairlength : modify_selection(t, v)).pack(side = "left")
+
+    var_env = IntVar()
+    var_env.set(environment_selection[0][1])
+    for txt, val in environment_selection:
+        Radiobutton(environment, text = txt, variable = var_env, value = val,
+                    command = lambda t = txt, v = var_env : modify_selection(t, v)).pack(side = "left")     
+
+    var_density = IntVar()
+    var_density.set(density_selection[0][1])
+    for txt, val in density_selection:
+        Radiobutton(density, text = txt, variable = var_density, value = val,
+                    command = lambda t = txt, v = var_density : modify_selection(t, v)).pack(side = "left")
+
+    var_position = IntVar()
+    var_position.set(position_selection[0][1])
+    for txt, val in position_selection:
+        Radiobutton(position, text = txt, variable = var_position, value = val,
+                    command = lambda t = txt, v = var_position : modify_selection(t, v)).pack(side = "left")
 
     # List of Possible Ports
     port_bar = Frame(window)
@@ -349,5 +465,4 @@ def init_window():
 
     # Start GUI loop...
     window.mainloop()
-
 init_window()
