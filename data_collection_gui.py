@@ -465,5 +465,4 @@ def init_window():
 
     # Start GUI loop...
     window.mainloop()
-
 init_window()

@@ -1,133 +1,197 @@
-from pylsl import StreamInlet, resolve_stream
-from serial import Serial, tools
-from multiprocessing import Process
+from pylsl import StreamInlet, resolve_byprop, LostError
+from serial import Serial
+from serial.tools import list_ports
+from multiprocessing import Process, Queue
 from time import time
-from csv import DictWriter
+
 
 class BioStream:
-    """
+    '''
         This class defines the behavior for the data collection process performed
         by the Biomechatronics Research Group. It receives data from an OpenBCI
         Mark IV headset via LSL. It synchronizes the readings from OpenBCI with
         the measures from a custom device that sends data via serial corresponding
         to the knee angle of the patient.
         @author Pedro Luis Rivera Gomez
-    """
+        modified by: Maria Marrero
+    '''
 
-    # TODO -> Add the other parameters for the test...
-    def __init__(self, stream_name, serial_port, baud_rate):
+    # Defining inner 'wrapper' classes.
+
+    class SensorData:
+        '''
+            This class represents a 2-tuple for a sensor data entry.
+            It stores the sensor value along with its corresponding timestamp.
+        '''
+
+        def __init__(self, value, timestamp):
+            self.value = value
+            self.timestamp = timestamp
+
+    class Mark4_Entry:
+        '''
+            This class represents a 2-tuple for an OpenBCI Mark IV headset entry.
+            It stores the 8-channels values along with their corresponding timestamp.
+        '''
+
+        def __init__(self, channels, timestamp):
+            self.channels = channels
+            self.timestamp = timestamp
+
+    # Default Biostream constructor. Initialize variables for data synchronization.
+    def __init__(self):
+        self.mark4entries_queue = Queue()
+        self.kneeangle_queue = Queue()
+
+    def find_lsl_index(self, stream_name):
         # Find EEG streams that are using the Lab Streaming Layer.
-        self.streams = resolve_stream('type', 'EEG')
+        self.streams = resolve_byprop('type', 'EEG', timeout = 0.5) 
 
         # Validate if stream_name is connected.
         stream_index = -1
         for i in range(0, len(self.streams)):
             if stream_name == self.streams[i].name():
                 stream_index = i
-        
+
+        return stream_index
+
+    # Defining data collection methods.
+
+    # TODO -> Test this method...
+    def collect_mark4lsl(self, num_samples, lsl_name):
+
+        stream_index = self.find_lsl_index(lsl_name)
         if stream_index < 0:
-            raise ValueError("Stream not connected : %s" % stream_name)
+            exit(1)
 
         # Create a new inlet to read from the stream_name.
-        self.inlet = StreamInlet(self.streams[stream_index])
+        self.inlet = StreamInlet(self.streams[stream_index], recover= False)
+        headset_entries = []
 
+        while num_samples > 0:
+            try:
+                bci_sample = self.inlet.pull_sample()
+            except LostError:
+                exit(3)
+            
+            headset_entries.append(self.Mark4_Entry(bci_sample, time()))
+            num_samples -= 1
+
+        return headset_entries
+
+    # Stores LSL entries resulting from the 'collect_mark4lsl' method into a Queue instance.
+    def store_mark4lsl_entries(self, num_samples, lsl_name, queue):
+        queue.put(self.collect_mark4lsl(num_samples, lsl_name))
+
+    # TODO -> Implement & test this function.
+    def collect_sensor_data(self, serial_name, baud_rate, num_samples):
+
+        # TODO -> This part is not validating. Must fix this...
         # Validate if serial_port is connected.
-        ports = list(tools.list_ports.comports())
+        is_connected = False
+        for device in list_ports.comports():
+            print(device.usb_info)
+            if device.device == serial_name:
+                is_connected = True
+                break
 
-        if serial_port not in ports:
-            raise ValueError("Serial Port not connected : %s" % serial_port)
+        if not is_connected:
+            exit(2) 
 
         # Establish serial communication.
-        self.serial_device = Serial(serial_port, baudrate=baud_rate)
+        self.serial_device = Serial(serial_name, baudrate=baud_rate)
 
-        self.bci_data = []
-        self.sensor_data = []
-        self.has_finished = False
-        
-    # TODO -> Write the textfile with self.bci_data...
-    def run_data_collection(self, samples):
-        sensor_process = Process(target = get_sensor_samples, args = ())
-        sensor_process.start()
-        openbci_process = Process(target = get_openbci_samples, args = (samples,))
-        openbci_process.start()
-        sensor_process.join()
-        openbci_process.join()
+        # Initialize sensor entries list.
+        sensor_entries = []
 
-
-    def get_openbci_samples(self, samples):
-        while samples > 0:
-            bci_sample, timestamp = self.inlet.pull_sample()
-            latest_sensor_data = self.get_latest_sensor_data(timestamp)
-            self.bci_data.append([timestamp, bci_sample, latest_sensor_data])
-            samples -= 1
-        self.has_finished = True
-
-
-    def get_sensor_samples(self):
-        # Loop until the get_openbci_samples process finishes.
-        while not self.has_finished:            
+        while num_samples > 0:
             # Get the latest sensor data.
             sensor_value = self.serial_device.readline().decode('ascii')
             sensor_timestamp = time()
-            self.sensor_data.append([sensor_timestamp, sensor_value])
+            sensor_entries.append(self.SensorData(
+                sensor_timestamp, sensor_value))
+            num_samples -= 1
+        return sensor_entries
 
-    def get_latest_sensor_data(self, timestamp):
-        # Calculate the initial number of sensor samples.
-        size = len(self.sensor_data)
+    def store_sensor_entries(self, num_samples, serial_name, baud_rate, queue):
+        queue.put(self.collect_sensor_data(
+            serial_name, baud_rate, num_samples))
 
-        # Make sure there is data.
-        if size == 0:
-            raise ConnectionError("No sensor data at this point.")
+    # TODO -> Test this function and check if any other validation must be performed.
+    def sync_headset_knee_data(self, bci_samples, knee_samples):
 
-        # Make sure the timestamp is greater or equal to the earliest sensor read.
-        if timestamp < self.sensor_data[0][0]:
-            raise ValueError("Invalid timestamp %s" % timestamp)        
+        if 2 * len(bci_samples) != len(knee_samples):
+            raise Exception("Samples cardinality does not match.")
 
-        latest_data = self.sensor_data[size - 1]
-        # If latest data corresponds to the given timestamp or only sensor read.
-        if timestamp == latest_data[0]:
-            return latest_data[1]
+        sync_data = []
 
-        # If the last value preceeds the timestamp, the sensor value remains the same.
-        elif size == 1 or timestamp > latest_data[0]:
-            self.sensor_data.append([timestamp, latest_data[1]])
-            return latest_data[1]
+        for i in range(0, len(bci_samples)):
+            # Get samples of interest.
+            bci_sample = bci_samples[i]
+            knee_sample_1 = knee_samples[2 * i]
+            knee_sampple_2 = knee_samples[2 * i + 1]
+            # Add the bci sample along with the average between both sensor values.
+            sync_data.append((bci_sample, self.SensorData(
+                timestamp=(knee_sample_1.timestamp+knee_sampple_2.timestamp)/2,
+                value=((knee_sample_1.value+knee_sampple_2.value)/2)
+            )))
 
-        # Perform linear interpolation.
-        else:
-            data_index = size - 1
-            # Find the data corresponding to the given timestamp 
-            # or the one before the given timestamp.
-            while data_index >= 0:
-                latest_data = self.sensor_data[data_index]
-                # Found value for the given timestamp.
-                if latest_data[0] == timestamp:
-                    return latest_data[1]
-                
-                elif latest_data[0] < timestamp:
-                    break
-                data_index -= 1
-            x1 = latest_data[0]
-            x2 = timestamp
-            x3 = self.sensor_data[data_index + 1][0]
-            y1 = latest_data[1]
-            y3 = self.sensor_data[data_index + 1][1]
-            return ((x2 - x1) * (y3 - y1))/ (x3 - x1) + y1
+        return sync_data
 
-    #TODO -> Pass filename string 
-    def write_to_csv(self, data_to_write):
-        csv_file = open(self.filename, 'w', newline='')
-        header = ['timestamp', 'sensor1', 'sensor2', 'sensor3', 'sensor4', 'sensor5', 'sensor6', 'sensor7', 'sensor8', 'knee_angle']
-        writer = DictWriter(csv_file, fieldnames=header)
-        writer.writeheader()
-        for i in range(0, len(data_to_write)):
-            writer.writerow({'timestamp': data_to_write[i][0],
-            'sensor1': data_to_write[i][1][0],
-            'sensor2':data_to_write[i][1][2],
-            'sensor3':data_to_write[i][1][3],
-            'sensor4':data_to_write[i][1][4],
-            'sensor5':data_to_write[i][1][5],
-            'sensor6':data_to_write[i][1][6],
-            'sensor7':data_to_write[i][1][7],
-            'sensor8':data_to_write[i][1][8],
-            'knee_angle': data_to_write[i][2]})
+    # TODO -> Test this function and update design doc.
+    def collect_mark4lsl_kneeserial(self, num_samples, lsl_name, serial_name, baud_rate):
+
+        # Defining processes.
+        mark4lsl_process = Process(
+            target=self.store_mark4lsl_entries, args=(num_samples, lsl_name, self.mark4entries_queue))
+        kneeangle_process = Process(target=self.store_sensor_entries, args=(
+            2 * num_samples, serial_name, baud_rate, self.kneeangle_queue))
+
+        # Start and join both processes.
+        mark4lsl_process.start()
+        kneeangle_process.start()
+        mark4lsl_process.join()
+        kneeangle_process.join()
+        if mark4lsl_process.exitcode:
+            #raise ValueError("LSL device not connected:", lsl_name)
+            exit(mark4lsl_process.exitcode)
+        if kneeangle_process.exitcode:
+            #raise ValueError("Serial Port not connected:", serial_name)
+            exit(kneeangle_process.exitcode)
+        # TODO -> Synchronize data stored in these queues.
+        #print(self.mark4entries_queue.get())
+        #print(self.kneeangle_queue.get())
+
+        return self.sync_headset_knee_data(self.mark4entries_queue.get(), self.kneeangle_queue.get())
+
+def main_test(): 
+    # Prepairing Mock Test.
+    num_samples = 20
+    lsl_name = "BioSemi"
+    serial_name = "COM4"  # /dev/ttys012
+    baud_rate = 9600
+
+    # Initializing mock BioStream.
+    mock = BioStream()
+
+
+    # # Mock testing the data collection methods.
+    # data_mark4 = mock.collect_mark4lsl(num_samples, lsl_name)
+    # data_mark4_knee = mock.collect_mark4lsl_kneeserial(
+    #     num_samples, lsl_name, serial_name, baud_rate)
+
+    # # Displaying Mark4 results.
+    # print("Mark4:", data_mark4)
+    # for val in data_mark4:
+    #     print(val.channels)
+
+    # # Displaying Mark4 + Knee Angle results.
+    # print("Mark4 + Knee Angle:", data_mark4_knee)
+    data_mark5 = mock.collect_mark4lsl_kneeserial(
+        num_samples, lsl_name, serial_name, baud_rate)
+    # print(mock._tosync_mark4_entries)
+    return 0
+
+# Make sure Serial & LSL mock streams are running before running this file.
+if __name__ == '__main__':
+    main_test()
