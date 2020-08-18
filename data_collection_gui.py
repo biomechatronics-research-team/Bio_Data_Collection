@@ -3,6 +3,7 @@ from tkinter.filedialog import asksaveasfile, askdirectory
 from past.builtins import apply
 from serial.tools import list_ports
 from pylsl import resolve_stream
+from biostream import BioStream
 
 # *** Defining Attributes ***
 # Strings
@@ -15,14 +16,15 @@ directory_txt = "Click and Select the Root Directory for this test:"
 select_dir_txt = "Select Root Directory"
 test_info_txt = "Basic Information:"
 gender_txt = "Gender:"
-age_txt = "Age:"
-height_txt = "Height:"
-weight_txt = "Weight:"
+age_txt = "Age: (years)"
+height_txt = "Height: (feet'inches: 5'11 or 4'8)"
+weight_txt = "Weight: (pounds)"
 settings_txt = "Test Settings:"
 leg_txt = "Choose Leg:"
 leg_act_text = "Type of Motion:"
 has_sensor_txt = "Sensor connected:"
 start_btn_txt = "Start"
+stop_btn_txt = "Stop"  # TODO -> Verify if this will be implemented.
 sensor_port_txt = "Select port to Recieve Data From:"
 lsl_txt = "Select LSL Stream Name From:"
 
@@ -30,31 +32,28 @@ lsl_txt = "Select LSL Stream Name From:"
 dimensions = "800x650"
 left_padding = 25
 start_font_size = 20
+scroll_item_height = 5
 
 # Fonts
 main_font = "Helvetica"
 title_font_size = 30
 genereal_font_size = 12
-scroll_item_height = 5
 
 # Colors
 highlight_bg_color = "gray"
 label_bg_color = "lightgreen"
 selected_item_color = "green"
+
+# Validation Constants
+MAX_AGE_LENGTH = 2
+MAX_HEIGHT_LENGTH = 4
+MAX_WEIGHT_LENGTH = 3
+height_proto = "n'nn"
+NUMERIC = 'n'
+SLASH = '\''
+
 # *** End of Attributes Definition ***
 
-# *** Global Variables ***
-test_id = ""
-current_directory = ""
-gender = 2 # 1 -> Male, 2 -> Female.
-age = -1
-height = -1
-weight = -1
-leg = -1
-motion_type = -1
-sensor_connected = 2
-port_name = ""
-lsl_stream_name = ""
 # *** End of Global Variables ***
 
 # *** Global Mapping (str, int)
@@ -68,24 +67,55 @@ gender_selection = [
 leg_selection = [
     ("Left Leg", 3),
     ("Right Leg", 4),
+    ("None", 5)
 ]
 
 # Choose Type of Movement, Imagery or Actual Movement
 movement_selection = [
-    ("Imagery", 5),
-    ("Intent", 6),
+    ("Imagery", 6),
+    ("Intent", 7),
+    ("None", 8),
 ]
 
 # Will the person use a Sensor, yes or no
 sensor_selection = [
-    ("Yes", 7),
-    ("No", 8),
+    ("Yes", 9),
+    ("No", 10),
 ]
 # *** End of Global Mapping ***
+
+# *** Global Variables ***
+leg = -1
+motion_type = -1
+sensor_connected = 2
+port_name = ""
+lsl_stream_name = ""
+test_id_entry = None
+age_entry = None
+height_entry = None
+weight_entry = None
+var_gender = None
+gender = gender_selection[0]
+current_dir = None
 
 # TODO -> Add functionality of start button...
 def start_button():
     print("START WAS PRESSED!")
+    t_ID = test_id_entry.get()
+    c_dir = current_dir.get()
+    gend = gender[0]
+    age = age_entry.get()
+    height = height_entry.get()
+    weight = weight_entry.get()
+    print(t_ID)
+    print(c_dir)
+    print(gend)
+    print(age)
+    print(height)
+    print(weight)
+    # test_params = validate_params()
+    # b_stream = BioStream(test_params)  # TODO -> PASS THE RIGHT ARGUMENTS...
+    # b_stream.run_data_collection()  # TODO -> PASS SAMPLES#
 
 def init_window():
     # Init program window...
@@ -105,13 +135,16 @@ def init_window():
     testID.pack(side = "top", fill = "x")
     Label(testID, text = test_id_txt, font = (main_font, genereal_font_size, "bold"), 
           padx = left_padding).pack(side = "left")
-    Entry(testID, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+    global test_id_entry
+    test_id_entry = Entry(testID, highlightbackground = highlight_bg_color, bg = label_bg_color)
+    test_id_entry.pack(side = "left")
     Label(testID, text = test_format_txt, padx = left_padding).pack(side = "left")
 
     # Directory Section
     directory = Frame(window)
     directory.pack(side = "top", fill = "x")
     Label(directory, text = directory_txt, padx = left_padding).pack(side = "left")
+    global current_dir
     current_dir = StringVar()
     current_dir_label = Label(directory, textvariable = current_dir)
 
@@ -130,6 +163,7 @@ def init_window():
     gender_bar = Frame(window)
     gender_bar.pack(side = "top", fill = "x")
     Label(gender_bar, text = gender_txt, padx = left_padding).pack(side = "left")
+    global var_gender
     var_gender = StringVar()
     var_gender.set(gender_selection[0][1])
     for txt, val in gender_selection:
@@ -140,19 +174,54 @@ def init_window():
     age_bar = Frame(window)
     age_bar.pack(side = "top", fill = "x")
     Label(age_bar, text = age_txt, padx = left_padding).pack(side = "left")
-    Entry(age_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+    
+    # Make sure the value of the age entry is a number less than 100.
+    def validate_age_input(age_in):
+        return len(age_in) == 0 or (age_in.isdigit() and len(age_in) <= MAX_AGE_LENGTH)
+    
+    validate_age = window.register(validate_age_input)
+    global age_entry
+    age_entry = Entry(age_bar, validate = "key", validatecommand = (validate_age, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
+    age_entry.pack(side = "left")
 
     # Height
     height_bar = Frame(window)
     height_bar.pack(side = "top", fill = "x")
     Label(height_bar, text = height_txt, padx = left_padding).pack(side = "left")
-    Entry(height_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+    
+    # Validate if given height input follows the pattern defined above (REFER TO CONSTANTS SECTION).
+    def validate_height_input(height_in):
+        
+        if len(height_in) > MAX_HEIGHT_LENGTH:
+            return False
+ 
+        for i in range(0, len(height_in)):
+            
+            if height_proto[i] == NUMERIC and not height_in[i].isnumeric():
+                return False
+            
+            if height_proto[i] == SLASH and not (height_in[i] == height_proto[i]):
+                return False
+        
+        return True
+
+    validate_height = window.register(validate_height_input)
+    global height_entry
+    height_entry = Entry(height_bar, validate = "key", validatecommand = (validate_height, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
+    height_entry.pack(side = "left")
 
     # Weight
     weight_bar = Frame(window)
     weight_bar.pack(side = "top", fill = "x")
     Label(weight_bar, text = weight_txt, padx = left_padding).pack(side = "left")
-    Entry(weight_bar, highlightbackground = highlight_bg_color, bg = label_bg_color).pack(side = "left")
+    
+    def validate_weight_input(weight_input):
+        return len(weight_input) == 0 or (weight_input.isdigit() and len(weight_input) <= MAX_WEIGHT_LENGTH)
+
+    validate_weight = window.register(validate_weight_input)
+    global weight_entry
+    weight_entry = Entry(weight_bar, validate = "key", validatecommand = (validate_weight, "%P"), highlightbackground = highlight_bg_color, bg = label_bg_color)
+    weight_entry.pack(side = "left")
 
     # Test Settings
     settings = Frame(window)
