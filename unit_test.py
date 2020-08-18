@@ -1,10 +1,12 @@
 import unittest
 from lsl_emulator import start_lsl
 from serial_emulator import start_serial
-import biostream_v2
+import biostream
 from multiprocessing import Process
 from time import sleep
-
+'''
+ @author Maria A Marrero Ortiz
+ '''
 class TestBioStream(unittest.TestCase):
 
     """ *** Run Data Collection Unit Tests... 
@@ -12,14 +14,14 @@ class TestBioStream(unittest.TestCase):
 
     """ *** tests for LSL only *** """
     def test_lslnotconnected(self):
-        biostream_process = Process(target=  biostream_v2.main_test)
+        biostream_process = Process(target=  biostream.main_test)
         biostream_process.start()
         biostream_process.join()
         self.assertEqual(biostream_process.exitcode, 1)
        
     def test_lsldisconnection(self):
         lsl_emulator_process = Process(target=start_lsl)
-        biostream_process = Process(target= biostream_v2.main_test)
+        biostream_process = Process(target= biostream.main_test)
         lsl_emulator_process.start()
         biostream_process.start()
         sleep(1)
@@ -33,7 +35,7 @@ class TestBioStream(unittest.TestCase):
     """ *** tests for LSL and Knee Encoder (serial device) *** """
     def test_lslnotconnected_2(self):
         serial_emulator_process = Process(target= start_serial)
-        biostream_process = Process(target= biostream_v2.main_test)
+        biostream_process = Process(target= biostream.main_test)
         serial_emulator_process.start()
         biostream_process.start()
         biostream_process.join()
@@ -43,7 +45,7 @@ class TestBioStream(unittest.TestCase):
     def test_serialnotconnected(self):
         lsl_emulator_process = Process(target= start_lsl)
         lsl_emulator_process.start()
-        biostream_process = Process(target=  biostream_v2.main_test)
+        biostream_process = Process(target=  biostream.main_test)
         biostream_process.start()
         biostream_process.join()
         self.assertEqual(biostream_process.exitcode, 2)
@@ -52,7 +54,7 @@ class TestBioStream(unittest.TestCase):
     def test_lsldisconnection_2(self):
         lsl_emulator_process = Process(target=start_lsl)
         serial_emulator_process = Process(target= start_serial)
-        biostream_process = Process(target= biostream_v2.main_test)
+        biostream_process = Process(target= biostream.main_test)
         lsl_emulator_process.start()
         serial_emulator_process.start()
         biostream_process.start()
@@ -65,7 +67,7 @@ class TestBioStream(unittest.TestCase):
     def test_serialdisconnection(self):
         lsl_emulator_process = Process(target=start_lsl)
         serial_emulator_process = Process(target= start_serial)
-        biostream_process = Process(target= biostream_v2.main_test)
+        biostream_process = Process(target= biostream.main_test)
         lsl_emulator_process.start()
         serial_emulator_process.start()
         biostream_process.start()
